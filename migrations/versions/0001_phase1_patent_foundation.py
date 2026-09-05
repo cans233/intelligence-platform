@@ -62,7 +62,12 @@ def upgrade() -> None:
     )
     op.create_index("ix_patent_application_family_id", "application", ["family_id"], schema="patent")
 
-    status_type = sa.Enum(*PATENT_STATUS_VALUES, name="patent_status", native_enum=False)
+    status_type = sa.Enum(
+        *PATENT_STATUS_VALUES,
+        name="patent_status",
+        native_enum=False,
+        create_constraint=True,
+    )
     op.create_table(
         "publication",
         sa.Column("id", uuid_type, primary_key=True, nullable=False),
@@ -95,6 +100,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(["publication_id"], ["patent.publication.id"], ondelete="CASCADE"),
+        sa.UniqueConstraint(
+            "publication_id", "claim_no", name="uq_patent_claim_publication_claim_no"
+        ),
         schema="patent",
     )
     op.create_index("ix_patent_claim_publication_id", "claim", ["publication_id"], schema="patent")

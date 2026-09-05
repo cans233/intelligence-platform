@@ -101,7 +101,13 @@ class PatentPublication(TimestampMixin, Base):
     publication_date: Mapped[date | None] = mapped_column(Date)
     legal_status: Mapped[str | None] = mapped_column(String(64))
     status: Mapped[PatentStatus] = mapped_column(
-        Enum(PatentStatus, name="patent_status", native_enum=False),
+        Enum(
+            PatentStatus,
+            name="patent_status",
+            native_enum=False,
+            create_constraint=True,
+            validate_strings=True,
+        ),
         default=PatentStatus.DISCOVERED,
         server_default=PatentStatus.DISCOVERED.value,
         nullable=False,
@@ -118,6 +124,11 @@ class PatentClaim(TimestampMixin, Base):
     __tablename__ = "claim"
     __table_args__ = (
         Index("ix_patent_claim_publication_id", "publication_id"),
+        UniqueConstraint(
+            "publication_id",
+            "claim_no",
+            name="uq_patent_claim_publication_claim_no",
+        ),
         {"schema": "patent"},
     )
 

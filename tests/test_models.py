@@ -21,3 +21,10 @@ def test_phase_one_patent_model_contract() -> None:
     )
     assert PatentStatus.DISCOVERED.value == "DISCOVERED"
     assert PatentStatus.ACTIVE.value == "ACTIVE"
+
+    publication_constraints = {
+        constraint.name for constraint in PatentPublication.__table__.constraints
+    }
+    claim_constraints = {constraint.name for constraint in PatentClaim.__table__.constraints}
+    assert "patent_status" in publication_constraints
+    assert "uq_patent_claim_publication_claim_no" in claim_constraints

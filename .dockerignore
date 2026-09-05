@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.venv
+.pytest_cache
+**/__pycache__
+**/*.py[cod]
+contracts
+deploy
+docs
+frontend
+search
+tests
+workers
+README.md
