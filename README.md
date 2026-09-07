@@ -1,10 +1,11 @@
 # 知脉 · 技术知识与专利情报系统
 
-第一阶段前端 Mock：React + TypeScript + Ant Design。
+第一阶段前端 Mock 位于 `frontend/`：React + TypeScript + Ant Design。
 
 ## 启动
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
@@ -24,6 +25,7 @@ npm run dev
 ## 检查
 
 ```bash
+cd frontend
 npm run build
 npm test
 ```
