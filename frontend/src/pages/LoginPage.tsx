@@ -31,7 +31,7 @@ export function LoginPage({ onSuccess }: { onSuccess: () => void }) {
       <Text className="rail-kicker">TECH INTELLIGENCE / 01</Text>
       <Title>把每一次检索，<br /><em>变成可追溯的判断。</em></Title>
       <Paragraph>公司技术知识与专利情报系统，让研发、知识产权和管理团队在同一条证据链上协作。</Paragraph>
-      <div className="rail-foot"><span className="status-dot" />Mock 环境 · Phase 1</div>
+      <div className="rail-foot"><span className="status-dot" />Contract Mock · B Phase 2</div>
     </div>
     <div className="login-panel"><div className="login-inner">
       <Text className="eyebrow">欢迎回来</Text>
