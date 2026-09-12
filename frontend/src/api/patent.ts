@@ -1,15 +1,29 @@
-import { patents } from '../mocks'
-import { wait, type ApiResponse } from './client'
+import { patentListItems, patents } from '../mocks'
+import type { PatentDetailDto, PatentListItemDto, PatentListQueryDto } from '../types'
+import { apiRequest, type PageResult } from './client'
 
 export const patentApi = {
-  async list(): Promise<ApiResponse<{ items: typeof patents; page: number; page_size: number; total: number }>> {
-    await wait(200)
-    return { code: 0, data: { items: patents, page: 1, page_size: 20, total: patents.length }, message: 'ok', trace_id: 'mock-patents-001' }
+  list(query: PatentListQueryDto = {}) {
+    const params = new URLSearchParams()
+    if (query.keyword) params.set('keyword', query.keyword)
+    query.countries?.forEach((country) => params.append('country', country))
+    query.qualities?.forEach((quality) => params.append('quality', quality))
+    if (query.page) params.set('page', String(query.page))
+    if (query.page_size) params.set('page_size', String(query.page_size))
+    const suffix = params.size ? `?${params}` : ''
+    return apiRequest<PageResult<PatentListItemDto>>(`/patents${suffix}`, { method: 'GET' }, () => {
+      const keyword = query.keyword?.toLowerCase()
+      const items = patentListItems.filter((item) => (!keyword || [item.title, item.publication_number, item.applicant].join(' ').toLowerCase().includes(keyword)) && (!query.countries?.length || query.countries.includes(item.country)) && (!query.qualities?.length || query.qualities.includes(item.record_quality)))
+      const page = query.page ?? 1
+      const pageSize = query.page_size ?? 20
+      return { items: items.slice((page - 1) * pageSize, page * pageSize), page, page_size: pageSize, total: items.length }
+    })
   },
-  async get(id: string): Promise<ApiResponse<(typeof patents)[number]>> {
-    await wait(180)
-    const patent = patents.find((item) => item.id === id)
-    if (!patent) throw new Error('PATENT_NOT_FOUND')
-    return { code: 0, data: patent, message: 'ok', trace_id: `mock-detail-${id}` }
+  get(id: string) {
+    return apiRequest<PatentDetailDto>(`/patents/${encodeURIComponent(id)}`, { method: 'GET' }, () => {
+      const patent = patents.find((item) => item.id === id)
+      if (!patent) throw new Error('PATENT_NOT_FOUND')
+      return patent
+    })
   },
 }
