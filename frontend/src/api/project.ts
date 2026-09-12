@@ -1,15 +1,20 @@
 import { projects } from '../mocks'
-import { wait, type ApiResponse } from './client'
+import type { ProjectDetailDto } from '../types'
+import { apiRequest, type PageResult } from './client'
 
 export const projectApi = {
-  async list(): Promise<ApiResponse<{ items: typeof projects; page: number; page_size: number; total: number }>> {
-    await wait(180)
-    return { code: 0, data: { items: projects, page: 1, page_size: 20, total: projects.length }, message: 'ok', trace_id: 'mock-projects-001' }
+  list(keyword = '') {
+    return apiRequest<PageResult<ProjectDetailDto>>(`/projects?keyword=${encodeURIComponent(keyword)}`, { method: 'GET' }, () => {
+      const value = keyword.toLowerCase()
+      const items = projects.filter((item) => !value || [item.name, item.code, item.owner].join(' ').toLowerCase().includes(value))
+      return { items, page: 1, page_size: 20, total: items.length }
+    })
   },
-  async get(id: string): Promise<ApiResponse<(typeof projects)[number]>> {
-    await wait(160)
-    const project = projects.find((item) => item.id === id)
-    if (!project) throw new Error('PROJECT_NOT_FOUND')
-    return { code: 0, data: project, message: 'ok', trace_id: `mock-project-${id}` }
+  get(id: string) {
+    return apiRequest<ProjectDetailDto>(`/projects/${encodeURIComponent(id)}`, { method: 'GET' }, () => {
+      const project = projects.find((item) => item.id === id)
+      if (!project) throw new Error('PROJECT_NOT_FOUND')
+      return project
+    })
   },
 }

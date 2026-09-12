@@ -1,10 +1,20 @@
-import { searchAll } from '../mocks'
-import { wait, type ApiResponse } from './client'
+import { savedInternalSearches, searchAll } from '../mocks'
+import type { InternalSearchQueryDto, InternalSearchResultDto, SavedInternalSearch, SaveInternalSearchDto } from '../types'
+import { apiRequest, type PageResult } from './client'
 
 export const searchApi = {
-  async search(query: string): Promise<ApiResponse<{ items: ReturnType<typeof searchAll>; page: number; page_size: number; total: number }>> {
-    await wait(250)
-    const items = searchAll(query)
-    return { code: 0, data: { items, page: 1, page_size: 20, total: items.length }, message: 'ok', trace_id: 'mock-search-001' }
+  search(query: InternalSearchQueryDto, signal?: AbortSignal) {
+    return apiRequest<PageResult<InternalSearchResultDto>>('/search', { method: 'POST', body: JSON.stringify(query), signal }, () => {
+      const all = searchAll(query)
+      const start = (query.page - 1) * query.page_size
+      return { items: all.slice(start, start + query.page_size), page: query.page, page_size: query.page_size, total: all.length }
+    })
+  },
+  save(input: SaveInternalSearchDto) {
+    return apiRequest<SavedInternalSearch>('/saved-searches', { method: 'POST', body: JSON.stringify(input) }, () => {
+      const item = { ...input, id: `SEARCH-${String(savedInternalSearches.length + 1).padStart(3, '0')}`, created_at: new Date().toISOString() }
+      savedInternalSearches.push(item)
+      return item
+    })
   },
 }
