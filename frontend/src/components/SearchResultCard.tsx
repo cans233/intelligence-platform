@@ -1,30 +1,30 @@
-import { FileTextOutlined, FolderOpenOutlined, ReadOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { FileTextOutlined, FolderOpenOutlined, ReadOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Card, Space, Tag, Typography } from 'antd'
 import { Link } from 'react-router-dom'
-import type { SearchKind, SearchResult } from '../types'
-import { ConfidenceTag } from './ConfidenceTag'
+import type { InternalSearchResultDto, SearchEntityType, SearchHighlightDto } from '../types'
 
 const { Paragraph, Text, Title } = Typography
-const kindMeta: Record<SearchKind, { label: string; color: string; icon: React.ReactNode }> = {
+const kindMeta: Record<SearchEntityType, { label: string; color: string; icon: React.ReactNode }> = {
   patent: { label: '专利', color: 'blue', icon: <ReadOutlined /> },
   project: { label: '项目', color: 'purple', icon: <FolderOpenOutlined /> },
   technology: { label: '技术', color: 'cyan', icon: <ThunderboltOutlined /> },
   document: { label: '文档', color: 'gold', icon: <FileTextOutlined /> },
 }
 
-function highlight(text: string, query: string) {
-  if (!query.trim()) return text
-  const terms = query.trim().split(/\s+/).filter(Boolean)
-  const re = new RegExp(`(${terms.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'ig')
-  return text.split(re).map((part, index) => terms.some((term) => part.toLowerCase() === term.toLowerCase()) ? <mark key={index}>{part}</mark> : part)
+function renderSegments(highlight?: SearchHighlightDto) {
+  return highlight?.segments.map((segment, index) => segment.highlighted ? <mark key={index}>{segment.text}</mark> : segment.text)
 }
 
-export function SearchResultCard({ item, query }: { item: SearchResult; query: string }) {
-  const kind = kindMeta[item.kind]
+const resultHref = (item: InternalSearchResultDto) => item.type === 'patent' || item.type === 'project' ? `/${item.type}s/${item.id}` : `/${item.type === 'technology' ? 'technologies' : 'documents'}#${item.id}`
+
+export function SearchResultCard({ item }: { item: InternalSearchResultDto }) {
+  const kind = kindMeta[item.type]
+  const title = item.highlights.find((value) => value.field === 'title')
+  const snippet = item.highlights.find((value) => value.field === 'snippet')
   return <Card className="result-card" variant="borderless">
-    <div className="result-heading"><div className="result-title"><Tag color={kind.color} icon={kind.icon}>{kind.label}</Tag><Link to={item.href}><Title level={4}>{highlight(item.title, query)}</Title></Link></div>{item.confidence && <ConfidenceTag value={item.confidence} />}</div>
-    <Space wrap className="result-meta"><Text>{item.subtitle}</Text><Text type="secondary">更新 {item.updated_at}</Text>{item.tags.slice(0, 3).map((tag) => <Tag key={tag}>{tag}</Tag>)}</Space>
-    <Paragraph ellipsis={{ rows: 2 }} className="result-abstract">{highlight(item.excerpt, query)}</Paragraph>
-    <div className="result-bottom"><Space wrap>{item.hit_reasons.map((reason) => <Tag color="blue" key={reason}>{reason}</Tag>)}</Space>{item.discovery_path && <Text type="secondary"><SearchOutlined /> {item.discovery_path}</Text>}</div>
+    <div className="result-heading"><div className="result-title"><Tag color={kind.color} icon={kind.icon}>{kind.label}</Tag><Link to={resultHref(item)}><Title level={4}>{renderSegments(title) ?? item.title}</Title></Link></div></div>
+    <Space wrap className="result-meta">{item.publication_number && <Text>{item.publication_number}</Text>}{item.applicant && <Text>{item.applicant}</Text>}<Text type="secondary">更新 {item.updated_at}</Text></Space>
+    <Paragraph ellipsis={{ rows: 2 }} className="result-abstract">{renderSegments(snippet) ?? item.snippet}</Paragraph>
+    <div className="result-bottom"><Space wrap>{item.hit_reasons.map((reason) => <Tag color="blue" key={reason}>{reason}</Tag>)}</Space><Text type="secondary">来源：{item.source.join(' / ')}</Text></div>
   </Card>
 }
