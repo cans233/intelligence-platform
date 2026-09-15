@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, Uuid, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, Uuid, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -65,9 +65,14 @@ class Project(Base):
     start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     classification: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
     organization: Mapped[Organization] = relationship(back_populates="projects")
     department: Mapped[Department | None] = relationship(back_populates="projects")
+    owner: Mapped["User | None"] = relationship(foreign_keys=[owner_id])
     technologies: Mapped[list["ProjectTechnology"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
@@ -92,6 +97,10 @@ class Technology(Base):
     description: Mapped[str | None] = mapped_column(Text)
     lifecycle_stage: Mapped[str | None] = mapped_column(String(64))
     keywords: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
     projects: Mapped[list["ProjectTechnology"]] = relationship(
         back_populates="technology", cascade="all, delete-orphan"
@@ -140,6 +149,7 @@ class ProjectPatent(Base):
     relation_reason: Mapped[str | None] = mapped_column(Text)
 
     project: Mapped[Project] = relationship(back_populates="patents")
+    publication: Mapped["PatentPublication"] = relationship()
 
 
 class TechnologyPatent(Base):
@@ -160,6 +170,7 @@ class TechnologyPatent(Base):
     relation_reason: Mapped[str | None] = mapped_column(Text)
 
     technology: Mapped[Technology] = relationship(back_populates="patents")
+    publication: Mapped["PatentPublication"] = relationship()
 
 
 class ProjectDocument(Base):
@@ -178,3 +189,4 @@ class ProjectDocument(Base):
     relation_type: Mapped[str] = mapped_column(String(32), nullable=False, default="REFERENCE")
 
     project: Mapped[Project] = relationship(back_populates="documents")
+    document: Mapped["Document"] = relationship()

@@ -54,6 +54,8 @@ class Document(Base):
     versions: Mapped[list["DocumentVersion"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="DocumentVersion.version_no"
     )
+    project: Mapped["Project | None"] = relationship()
+    uploaded_user: Mapped["User"] = relationship(foreign_keys=[uploaded_by])
 
 
 class DocumentVersion(Base):

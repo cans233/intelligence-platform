@@ -109,6 +109,8 @@ class PatentPublication(TimestampMixin, Base):
     )
     publication_number: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     title: Mapped[str] = mapped_column(String(1000), nullable=False)
+    # Compatibility fallback only. New writes belong in patent.abstract/description.
+    # TODO Phase 3: backfill, keep a compatibility window, then remove these legacy columns.
     abstract: Mapped[str | None] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text)
     publication_date: Mapped[date | None] = mapped_column(Date)
