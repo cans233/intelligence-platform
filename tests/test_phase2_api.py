@@ -15,13 +15,19 @@ pytestmark = pytest.mark.integration
 
 def _client() -> TestClient:
     if not DATABASE_URL:
-        pytest.skip("DATABASE_URL is required for PostgreSQL API integration tests")
+        message = "DATABASE_URL is required for PostgreSQL API integration tests"
+        if os.getenv("REQUIRE_POSTGRES_INTEGRATION") == "1":
+            pytest.fail(message)
+        pytest.skip(message)
     engine = create_engine(DATABASE_URL, pool_pre_ping=True)
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
     except Exception as exc:
-        pytest.skip(f"PostgreSQL is unavailable: {exc}")
+        message = f"PostgreSQL is unavailable: {exc}"
+        if os.getenv("REQUIRE_POSTGRES_INTEGRATION") == "1":
+            pytest.fail(message)
+        pytest.skip(message)
 
     from backend.app.main import app
 
@@ -37,7 +43,8 @@ def test_phase2_api_happy_path_and_permissions() -> None:
     )
     assert login.status_code == 200
     assert login.json()["code"] == 0
-    admin_headers = {"Authorization": f"Bearer {login.json()['data']['token']}"}
+    assert login.json()["data"]["access_token"]
+    admin_headers = {"Authorization": f"Bearer {login.json()['data']['access_token']}"}
 
     me = client.get("/api/v1/me", headers=admin_headers)
     assert me.status_code == 200
@@ -46,11 +53,34 @@ def test_phase2_api_happy_path_and_permissions() -> None:
     patents = client.get("/api/v1/patents", headers=admin_headers)
     assert patents.status_code == 200
     assert patents.json()["data"]["total"] == 3
-    patent_id = patents.json()["data"]["items"][0]["id"]
+    list_item = patents.json()["data"]["items"][0]
+    assert {
+        "id",
+        "family_id",
+        "title",
+        "publication_number",
+        "application_number",
+        "country",
+        "applicant_names",
+        "publication_date",
+        "ipc_codes",
+        "cpc_codes",
+        "legal_status",
+        "status",
+        "source_codes",
+        "updated_at",
+    } <= set(list_item)
+    assert isinstance(list_item["applicant_names"], list)
+    patent_id = list_item["id"]
 
     detail = client.get(f"/api/v1/patents/{patent_id}", headers=admin_headers)
     assert detail.status_code == 200
-    assert len(detail.json()["data"]["claims"]) >= 1
+    detail_data = detail.json()["data"]
+    assert len(detail_data["claims"]) >= 1
+    assert len(detail_data["family_members"]) == 3
+    assert {"references", "cited_by"} == set(detail_data["citations"])
+    assert isinstance(detail_data["discovery_path"], list)
+    assert isinstance(detail_data["normalized_fields"], dict)
 
     family = client.get(f"/api/v1/patents/{patent_id}/family", headers=admin_headers)
     assert family.status_code == 200
@@ -63,11 +93,19 @@ def test_phase2_api_happy_path_and_permissions() -> None:
 
     citations = client.get(f"/api/v1/patents/{patent_id}/citations", headers=admin_headers)
     assert citations.status_code == 200
+    assert {"references", "cited_by"} == set(citations.json()["data"])
 
     projects = client.get("/api/v1/projects", headers=admin_headers)
     assert projects.status_code == 200
     assert projects.json()["data"]["total"] == 1
-    organization_id = projects.json()["data"]["items"][0]["organization_id"]
+    project_item = projects.json()["data"]["items"][0]
+    assert {"organization", "department", "owner", "technologies", "created_at", "updated_at"} <= set(
+        project_item
+    )
+    organization_id = project_item["organization"]["id"]
+    project = client.get(f"/api/v1/projects/{project_item['id']}", headers=admin_headers)
+    assert project.status_code == 200
+    assert {"documents", "company_patents", "external_related_patents"} <= set(project.json()["data"])
 
     technologies = client.get("/api/v1/technologies", headers=admin_headers)
     assert technologies.status_code == 200
@@ -86,7 +124,7 @@ def test_phase2_api_happy_path_and_permissions() -> None:
     )
     assert analyst_login.status_code == 200
     analyst_headers = {
-        "Authorization": f"Bearer {analyst_login.json()['data']['token']}"
+        "Authorization": f"Bearer {analyst_login.json()['data']['access_token']}"
     }
     denied = client.post(
         "/api/v1/projects",
