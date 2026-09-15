@@ -2,7 +2,7 @@
   "name": "intelligence-platform-frontend",
   "private": true,
   "version": "0.1.0",
-  "packageManager": "pnpm@8.7.6",
+  "packageManager": "pnpm@9.15.9",
   "type": "module",
   "scripts": {
     "dev": "vite",

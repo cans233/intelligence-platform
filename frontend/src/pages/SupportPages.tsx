@@ -12,7 +12,7 @@ import { systemApi } from '../api/system'
 import { technologyApi } from '../api/technology'
 import { PageHeader } from '../components/PageHeader'
 import { StateBlock, stateFromUrl } from '../components/StateBlock'
-import type { AdminUserDto, CreateMonitoringProfileDto, DataSourceStatusDto, DocumentDto, JobRecordDto, MonitoringProfileDto, MonitoringRunDto, ProjectDetailDto, ReviewItemDto, TechnologyDto } from '../types'
+import type { AdminUserDto, CreateMonitoringProfileDto, DataSourceStatusDto, DocumentDto, JobRecordDto, MonitoringProfileDto, MonitoringRunDto, ProjectListItemViewModel, ReviewItemDto, TechnologyDto } from '../types'
 
 const { Paragraph, Text, Title } = Typography
 
@@ -42,7 +42,7 @@ export function KnowledgePage() {
   const { data, loading, error, load } = usePageData(async () => {
     const [technologies, projects, documents] = await Promise.all([technologyApi.list(), projectApi.list(), documentApi.list()])
     return { technologies: technologies.data.items, projects: projects.data.items, documents: documents.data.items }
-  }, { technologies: [] as TechnologyDto[], projects: [] as ProjectDetailDto[], documents: [] as DocumentDto[] })
+  }, { technologies: [] as TechnologyDto[], projects: [] as ProjectListItemViewModel[], documents: [] as DocumentDto[] })
   const state = pageState(loading, error)
 
   return <>

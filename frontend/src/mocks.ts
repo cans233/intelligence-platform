@@ -7,9 +7,9 @@ import type {
   JobRecordDto,
   MonitoringProfileDto,
   MonitoringRunDto,
-  PatentDetailDto,
-  PatentListItemDto,
-  ProjectDetailDto,
+  MockPatentDetail,
+  MockPatentListItem,
+  MockProjectDetail,
   ReviewItemDto,
   SavedInternalSearch,
   TechnologyDto,
@@ -30,7 +30,7 @@ export const documents: DocumentDto[] = [
 
 const projectLink = { id: 'project-mmwave', code: 'PRJ-RF-024', name: '毫米波收发芯片预研', relation: '核心技术与专利布局' }
 
-export const patents: PatentDetailDto[] = [
+export const patents: MockPatentDetail[] = [
   {
     id: 'cn-001', title: '一种面向毫米波通信的低相噪压控振荡器及校准方法', ownership: 'COMPANY', record_quality: 'VERIFIED', updated_at: '2026-09-08',
     official_facts: { publication_number: 'CN118765432A', application_number: 'CN202410123456.7', country: 'CN', applicant_names: ['星河微电子（上海）有限公司'], inventor_names: ['李明', '周宁'], publication_date: '2025-02-18', filing_date: '2024-08-16', priority_date: '2024-08-16', ipc_codes: ['H03B 5/12'], cpc_codes: ['H03B5/12'], legal_status: '申请中', abstract: '本发明公开一种面向毫米波通信的低相噪压控振荡器及校准方法，通过分段式谐振网络和数字校准环路提升调谐线性度与温度稳定性。', claims: [{ claim_no: 1, claim_type: '独立', text: '一种压控振荡器，包括谐振核心、数字校准环路和温度补偿单元，其特征在于，所述数字校准环路根据目标频段对谐振核心进行分段调谐。' }, { claim_no: 2, claim_type: '从属', text: '根据权利要求1所述的压控振荡器，其中温度补偿单元包括温度传感器和查找表。' }], family_members: [{ id: 'family-cn', country: 'CN', publication_number: 'CN118765432A', publication_date: '2025-02-18', legal_status: '申请中' }, { id: 'family-wo', country: 'WO', publication_number: 'WO2025034567A1', publication_date: '2025-03-06', legal_status: '有效' }], citations: [{ id: 'cite-1', direction: '引用', publication_number: 'CN112345678A', title: '宽带压控振荡器的数字校准电路' }], legal_events: [{ id: 'event-1', date: '2025-02-18', event: '发明专利申请公布', source: 'CNIPA' }, { id: 'event-2', date: '2024-08-16', event: '专利申请受理', source: 'CNIPA' }] },
@@ -55,13 +55,13 @@ export const patents: PatentDetailDto[] = [
   },
 ]
 
-export const patentListItems = patents.map((patent): PatentListItemDto => ({
-  id: patent.id, title: patent.title, publication_number: patent.official_facts.publication_number, application_number: patent.official_facts.application_number, country: patent.official_facts.country, applicant: patent.official_facts.applicant_names[0], publication_date: patent.official_facts.publication_date, ipc_codes: patent.official_facts.ipc_codes, record_quality: patent.record_quality, ownership: patent.ownership,
+export const patentListItems = patents.map((patent): MockPatentListItem => ({
+  id: patent.id, title: patent.title, publication_number: patent.official_facts.publication_number, application_number: patent.official_facts.application_number, country: patent.official_facts.country, applicant: patent.official_facts.applicant_names[0], applicant_names: patent.official_facts.applicant_names, publication_date: patent.official_facts.publication_date, ipc_codes: patent.official_facts.ipc_codes, cpc_codes: patent.official_facts.cpc_codes, legal_status: patent.official_facts.legal_status, status: patent.record_quality, source_codes: patent.sources.map((item) => item.source), updated_at: patent.updated_at, record_quality: patent.record_quality, ownership: patent.ownership,
 }))
 
 const relation = (id: string, relevance: '高' | '中' | '低', relation_reason: string) => ({ ...patentListItems.find((item) => item.id === id)!, relevance, relation_reason })
 
-export const projects: ProjectDetailDto[] = [
+export const projects: MockProjectDetail[] = [
   { id: 'project-mmwave', code: 'PRJ-RF-024', name: '毫米波收发芯片预研', organization: '研发中心', department: '射频集成电路部', owner: '周宁', stage: '原型验证', status: '进行中', updated_at: '2026-09-08', description: '围绕 24–40 GHz 收发前端开展 VCO、功放和自校准技术预研，沉淀可复用的专利证据与内部方案。', technologies: technologies.filter((item) => item.project_ids.includes('project-mmwave')), documents: documents.filter((item) => item.project_id === 'project-mmwave'), company_patents: [relation('cn-001', '高', '公司自有申请，覆盖项目核心数字校准方案')], external_related_patents: [relation('us-002', '中', '校准环路和温度补偿方向相近'), relation('family-003', '中', '同属多频段射频前端技术链')], member_count: 8, risk: '中' },
   { id: 'project-edge-ai', code: 'PRJ-AI-017', name: '低功耗边缘推理平台', organization: '研发中心', department: '边缘计算部', owner: '陈悦', stage: '方案评审', status: '观察中', updated_at: '2026-09-07', description: '评估端侧推理芯片的功耗管理、模型压缩与信号处理方案。', technologies: technologies.filter((item) => item.project_ids.includes('project-edge-ai')), documents: documents.filter((item) => item.project_id === 'project-edge-ai'), company_patents: [], external_related_patents: [relation('conflict-004', '中', '低功耗信号处理方向相关，来源字段待审核')], member_count: 5, risk: '高' },
   { id: 'project-thermal', code: 'PRJ-PWR-011', name: '功率器件热管理', organization: '工程技术中心', department: '功率电子部', owner: '林涛', stage: '结题归档', status: '已归档', updated_at: '2026-08-29', description: '整理功率模块散热结构、封装材料及热仿真结论。', technologies: technologies.filter((item) => item.project_ids.includes('project-thermal')), documents: documents.filter((item) => item.project_id === 'project-thermal'), company_patents: [], external_related_patents: [], member_count: 4, risk: '低' },
