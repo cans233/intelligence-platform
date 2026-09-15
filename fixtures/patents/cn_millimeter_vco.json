@@ -1,0 +1,33 @@
+{
+  "family_id": "FAM-MMWAVE-VCO-2024",
+  "country": "CN",
+  "application_number": "CN202410123456.7",
+  "publication_number": "CN118765432A",
+  "title": "一种面向毫米波通信的低相噪压控振荡器及校准方法",
+  "filing_date": "2024-08-16",
+  "publication_date": "2025-02-18",
+  "legal_status": "申请中",
+  "applicant": "星河微电子（上海）有限公司",
+  "inventors": ["李明", "周宁"],
+  "classifications": [
+    {"scheme": "IPC", "code": "H03B5/12"},
+    {"scheme": "CPC", "code": "H03B5/12"}
+  ],
+  "abstract": "本发明公开一种面向毫米波通信的低相噪压控振荡器及校准方法，通过分段式谐振网络和数字校准环路提升调谐线性度与温度稳定性。",
+  "description": "本技术适用于24GHz至40GHz收发前端，利用温度传感器和查找表对分段谐振网络进行数字校准。",
+  "claims": [
+    {"claim_no": 1, "claim_type": "INDEPENDENT", "text": "一种压控振荡器，包括谐振核心、数字校准环路和温度补偿单元，其特征在于，所述数字校准环路根据目标频段对谐振核心进行分段调谐。"},
+    {"claim_no": 2, "claim_type": "DEPENDENT", "text": "根据权利要求1所述的压控振荡器，其中温度补偿单元包括温度传感器和查找表。"},
+    {"claim_no": 3, "claim_type": "DEPENDENT", "text": "根据权利要求1所述的压控振荡器，其中分段调谐覆盖28GHz和39GHz工作频段。"},
+    {"claim_no": 4, "claim_type": "DEPENDENT", "text": "根据权利要求1所述的压控振荡器，其中数字校准环路在启动阶段保存目标控制码。"},
+    {"claim_no": 5, "claim_type": "DEPENDENT", "text": "根据权利要求1所述的压控振荡器，其中温度补偿单元根据工作温度修正调谐控制码。"}
+  ],
+  "source_code": "CNIPA",
+  "source_record_id": "CNIPA-CN118765432A",
+  "priority_number": "CN202410123456.7",
+  "priority_date": "2024-08-16",
+  "legal_events": [
+    {"event_date": "2024-08-16", "event_code": "APPLICATION_RECEIVED", "event_description": "发明专利申请受理", "legal_status": "申请中"},
+    {"event_date": "2025-02-18", "event_code": "PUBLICATION", "event_description": "发明专利申请公布", "legal_status": "申请中"}
+  ]
+}

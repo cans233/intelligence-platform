@@ -1,0 +1,15 @@
+{
+  "organization_name": "星河微电子（上海）有限公司",
+  "organization_code": "XHME-SH",
+  "department_name": "射频集成电路部",
+  "department_code": "RFIC",
+  "project_code": "PRJ-RF-024",
+  "project_name": "毫米波收发芯片预研",
+  "description": "围绕24GHz至40GHz收发前端开展VCO、功放和自校准技术预研，沉淀可复用的专利证据与内部方案。",
+  "status": "ACTIVE",
+  "technologies": [
+    {"name": "毫米波压控振荡器", "domain": "射频芯片", "lifecycle_stage": "重点跟踪", "keywords": "毫米波,VCO,相噪,数字校准"},
+    {"name": "数字校准环路", "domain": "射频芯片", "lifecycle_stage": "方案验证", "keywords": "数字校准,温度补偿,调谐线性度"}
+  ],
+  "patent_publication_numbers": ["CN118765432A", "US20250123456A1", "EP4567890A1"]
+}

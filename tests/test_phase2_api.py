@@ -1,0 +1,167 @@
+import os
+import subprocess
+import sys
+from uuid import UUID
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, select, text
+from sqlalchemy.exc import IntegrityError
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+pytestmark = pytest.mark.integration
+
+
+def _client() -> TestClient:
+    if not DATABASE_URL:
+        pytest.skip("DATABASE_URL is required for PostgreSQL API integration tests")
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception as exc:
+        pytest.skip(f"PostgreSQL is unavailable: {exc}")
+
+    from backend.app.main import app
+
+    return TestClient(app)
+
+
+def test_phase2_api_happy_path_and_permissions() -> None:
+    client = _client()
+
+    login = client.post(
+        "/api/v1/auth/login",
+        json={"username": "admin", "password": "Admin-Phase2-2026!"},
+    )
+    assert login.status_code == 200
+    assert login.json()["code"] == 0
+    admin_headers = {"Authorization": f"Bearer {login.json()['data']['token']}"}
+
+    me = client.get("/api/v1/me", headers=admin_headers)
+    assert me.status_code == 200
+    assert me.json()["data"]["username"] == "admin"
+
+    patents = client.get("/api/v1/patents", headers=admin_headers)
+    assert patents.status_code == 200
+    assert patents.json()["data"]["total"] == 3
+    patent_id = patents.json()["data"]["items"][0]["id"]
+
+    detail = client.get(f"/api/v1/patents/{patent_id}", headers=admin_headers)
+    assert detail.status_code == 200
+    assert len(detail.json()["data"]["claims"]) >= 1
+
+    family = client.get(f"/api/v1/patents/{patent_id}/family", headers=admin_headers)
+    assert family.status_code == 200
+    assert len(family.json()["data"]) == 3
+
+    sources = client.get(f"/api/v1/patents/{patent_id}/sources", headers=admin_headers)
+    assert sources.status_code == 200
+    assert len(sources.json()["data"]) == 1
+    assert sources.json()["data"][0]["raw_data"]["source_record_id"]
+
+    citations = client.get(f"/api/v1/patents/{patent_id}/citations", headers=admin_headers)
+    assert citations.status_code == 200
+
+    projects = client.get("/api/v1/projects", headers=admin_headers)
+    assert projects.status_code == 200
+    assert projects.json()["data"]["total"] == 1
+    organization_id = projects.json()["data"]["items"][0]["organization_id"]
+
+    technologies = client.get("/api/v1/technologies", headers=admin_headers)
+    assert technologies.status_code == 200
+    assert technologies.json()["data"]["total"] == 2
+
+    documents = client.get("/api/v1/documents", headers=admin_headers)
+    assert documents.status_code == 200
+    document_id = documents.json()["data"]["items"][0]["id"]
+    versions = client.get(f"/api/v1/documents/{document_id}/versions", headers=admin_headers)
+    assert versions.status_code == 200
+    assert len(versions.json()["data"]) == 2
+
+    analyst_login = client.post(
+        "/api/v1/auth/login",
+        json={"username": "ip.analyst", "password": "Patent-Review-2026!"},
+    )
+    assert analyst_login.status_code == 200
+    analyst_headers = {
+        "Authorization": f"Bearer {analyst_login.json()['data']['token']}"
+    }
+    denied = client.post(
+        "/api/v1/projects",
+        headers=analyst_headers,
+        json={
+            "organization_id": organization_id,
+            "code": "PRJ-DENIED-001",
+            "name": "权限测试项目",
+        },
+    )
+    assert denied.status_code == 403
+    assert denied.json()["code"] == "PERMISSION_DENIED"
+
+
+def test_phase2_api_not_found_and_auth_failures() -> None:
+    client = _client()
+    missing_id = UUID("00000000-0000-0000-0000-000000000000")
+
+    missing = client.get(f"/api/v1/patents/{missing_id}")
+    assert missing.status_code == 404
+    assert missing.json()["code"] == "PATENT_NOT_FOUND"
+
+    unauthorized = client.get("/api/v1/me")
+    assert unauthorized.status_code == 401
+    assert unauthorized.json()["code"] == "AUTH_REQUIRED"
+
+
+def test_phase2_database_constraints_and_source_preservation() -> None:
+    client = _client()
+    del client
+
+    from backend.app.db.session import SessionLocal
+    from backend.app.models import PatentClaim, PatentPublication, SourceRecord
+
+    subprocess.run(
+        [sys.executable, "scripts/seed_fixtures.py"],
+        check=True,
+        env=os.environ.copy(),
+    )
+    with SessionLocal() as db:
+        publication = db.scalar(
+            select(PatentPublication).where(
+                PatentPublication.publication_number == "CN118765432A"
+            )
+        )
+        assert publication is not None
+        original_source = db.scalar(
+            select(SourceRecord).where(
+                SourceRecord.source_record_id == "CNIPA-CN118765432A"
+            )
+        )
+        assert original_source is not None
+        original_raw = dict(original_source.raw_data)
+
+        duplicate = PatentClaim(
+            publication_id=publication.id,
+            claim_no=1,
+            claim_type="DEPENDENT",
+            text="重复权利要求约束测试",
+        )
+        db.add(duplicate)
+        with pytest.raises(IntegrityError):
+            db.flush()
+        db.rollback()
+
+    subprocess.run(
+        [sys.executable, "scripts/seed_fixtures.py"],
+        check=True,
+        env=os.environ.copy(),
+    )
+    with SessionLocal() as db:
+        source = db.scalar(
+            select(SourceRecord).where(
+                SourceRecord.source_record_id == "CNIPA-CN118765432A"
+            )
+        )
+        assert source is not None
+        assert source.raw_data == original_raw

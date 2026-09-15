@@ -1,0 +1,22 @@
+{
+  "name": "毫米波收发前端技术需求说明书",
+  "file_type": "DOCX",
+  "storage_location": "s3://company-documents/PRJ-RF-024/mmwave-requirements-v1.docx",
+  "confidentiality": "INTERNAL",
+  "versions": [
+    {
+      "version_no": 1,
+      "storage_location": "s3://company-documents/PRJ-RF-024/mmwave-requirements-v1.docx",
+      "checksum": "sha256:4d2a8f0c6a4b7f4a9c3e7d2f1b6a5c8d",
+      "parse_status": "SUCCEEDED",
+      "content": "定义24GHz至40GHz收发频段、相噪、输出功率及温漂指标。"
+    },
+    {
+      "version_no": 2,
+      "storage_location": "s3://company-documents/PRJ-RF-024/mmwave-requirements-v2.docx",
+      "checksum": "sha256:8f3c1a9e6b2d4c7f5a0e1d3b9c6a2f8e",
+      "parse_status": "SUCCEEDED",
+      "content": "补充数字校准环路启动时间、28GHz和39GHz目标频段及温度补偿指标。"
+    }
+  ]
+}
