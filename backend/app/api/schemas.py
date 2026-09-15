@@ -22,9 +22,10 @@ class LoginRequest(BaseModel):
 
 
 class LoginDto(BaseModel):
-    token: str
+    access_token: str
     token_type: str = "bearer"
     user: UserDto
+    token: str | None = None
 
 
 class ClaimDto(OrmDto):
@@ -32,6 +33,19 @@ class ClaimDto(OrmDto):
     claim_no: int
     claim_type: str | None
     text: str
+
+
+class PersonDto(BaseModel):
+    id: UUID
+    name: str
+    country: str | None = None
+
+
+class ClassificationDto(OrmDto):
+    id: UUID
+    scheme: str
+    code: str
+    raw_code: str | None
 
 
 class SourceRecordDto(OrmDto):
@@ -44,6 +58,7 @@ class SourceRecordDto(OrmDto):
 
 class FamilyMemberDto(OrmDto):
     id: UUID
+    publication_id: UUID
     country: str
     publication_number: str
     publication_date: date | None
@@ -52,9 +67,16 @@ class FamilyMemberDto(OrmDto):
 
 class CitationDto(OrmDto):
     id: UUID
+    citing_publication_id: UUID
+    citing_publication_number: str | None = None
     citation_type: str
     cited_publication_number: str | None
     cited_publication_id: UUID | None
+
+
+class CitationDirectionsDto(BaseModel):
+    references: list[CitationDto] = Field(default_factory=list)
+    cited_by: list[CitationDto] = Field(default_factory=list)
 
 
 class LegalEventDto(OrmDto):
@@ -66,29 +88,41 @@ class LegalEventDto(OrmDto):
     source_record_id: UUID | None
 
 
-class PatentListItemDto(OrmDto):
+class PatentListItemDto(BaseModel):
     id: UUID
     family_id: str
-    application_number: str
-    publication_number: str
-    country: str
     title: str
+    publication_number: str
+    application_number: str
+    country: str
+    applicant_names: list[str] = Field(default_factory=list)
     publication_date: date | None
+    ipc_codes: list[str] = Field(default_factory=list)
+    cpc_codes: list[str] = Field(default_factory=list)
     legal_status: str | None
     status: str
+    source_codes: list[str] = Field(default_factory=list)
+    updated_at: datetime
 
 
 class PatentDetailDto(PatentListItemDto):
+    filing_date: date | None
+    priority_date: date | None
     abstract: str | None
     description: str | None
-    applicants: list[str]
-    inventors: list[str]
-    classifications: list[dict]
-    claims: list[ClaimDto]
-    family: list[FamilyMemberDto]
-    citations: list[CitationDto]
-    legal_events: list[LegalEventDto]
-    sources: list[SourceRecordDto]
+    applicants: list[PersonDto] = Field(default_factory=list)
+    inventors: list[PersonDto] = Field(default_factory=list)
+    classifications: list[ClassificationDto] = Field(default_factory=list)
+    claims: list[ClaimDto] = Field(default_factory=list)
+    family_members: list[FamilyMemberDto] = Field(default_factory=list)
+    citations: CitationDirectionsDto = Field(default_factory=CitationDirectionsDto)
+    legal_events: list[LegalEventDto] = Field(default_factory=list)
+    sources: list[SourceRecordDto] = Field(default_factory=list)
+    normalized_fields: dict = Field(default_factory=dict)
+    ai_enhancements: dict = Field(default_factory=dict)
+    human_conclusions: dict = Field(default_factory=dict)
+    discovery_path: list[str] = Field(default_factory=list)
+    created_at: datetime
 
 
 class PageDto(BaseModel):
@@ -96,6 +130,12 @@ class PageDto(BaseModel):
     page: int
     page_size: int
     total: int
+
+
+class ReferenceDto(BaseModel):
+    id: UUID
+    code: str | None = None
+    name: str
 
 
 class ProjectCreate(BaseModel):
@@ -118,25 +158,58 @@ class ProjectPatch(BaseModel):
     classification: str | None = None
 
 
-class ProjectDto(OrmDto):
+class ProjectListItemDto(BaseModel):
     id: UUID
-    organization_id: UUID
-    department_id: UUID | None
-    owner_id: UUID | None
     code: str
     name: str
     description: str | None
     status: str
-    classification: str | None
+    organization: ReferenceDto
+    department: ReferenceDto | None
+    owner: ReferenceDto | None
+    technologies: list[ReferenceDto] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
 
 
-class TechnologyDto(OrmDto):
+class ProjectPatentDto(BaseModel):
+    id: UUID
+    publication_number: str
+    title: str
+    country: str
+    relation_type: str
+    relevance_score: int | None = None
+    relation_reason: str | None = None
+
+
+class ProjectDocumentDto(BaseModel):
+    id: UUID
+    name: str
+    file_type: str
+    status: str
+    current_version_no: int | None
+
+
+class ProjectDetailDto(ProjectListItemDto):
+    documents: list[ProjectDocumentDto] = Field(default_factory=list)
+    company_patents: list[ProjectPatentDto] = Field(default_factory=list)
+    external_related_patents: list[ProjectPatentDto] = Field(default_factory=list)
+
+
+class TechnologyListItemDto(BaseModel):
     id: UUID
     name: str
     domain: str | None
     description: str | None
     lifecycle_stage: str | None
-    keywords: str | None
+    keywords: list[str] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+
+class TechnologyDetailDto(TechnologyListItemDto):
+    projects: list[ReferenceDto] = Field(default_factory=list)
+    patents: list[ProjectPatentDto] = Field(default_factory=list)
 
 
 class DocumentCreate(BaseModel):
@@ -147,19 +220,21 @@ class DocumentCreate(BaseModel):
     confidentiality: str = "INTERNAL"
 
 
-class DocumentDto(OrmDto):
+class DocumentListItemDto(BaseModel):
     id: UUID
-    project_id: UUID | None
-    uploaded_by: UUID
     name: str
+    project: ReferenceDto | None
+    uploaded_by: ReferenceDto
     file_type: str
     storage_location: str
     status: str
     confidentiality: str
     current_version_no: int | None
+    created_at: datetime
+    updated_at: datetime
 
 
-class DocumentVersionDto(OrmDto):
+class DocumentVersionDto(BaseModel):
     id: UUID
     document_id: UUID
     version_no: int
@@ -170,6 +245,11 @@ class DocumentVersionDto(OrmDto):
     uploaded_by: UUID
     parse_status: str
     parse_error: str | None
+    created_at: datetime
+
+
+class DocumentDetailDto(DocumentListItemDto):
+    versions: list[DocumentVersionDto] = Field(default_factory=list)
 
 
 class JobDto(OrmDto):

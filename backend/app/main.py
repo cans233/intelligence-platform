@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from starlette.middleware.cors import CORSMiddleware
 
 from backend.app.api.auth import router as auth_router, user_dto
 from backend.app.api.common import ok, trace_id
@@ -17,6 +18,13 @@ from backend.app.db.session import engine
 
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(patents_router, prefix="/api/v1")
 app.include_router(projects_router, prefix="/api/v1")
