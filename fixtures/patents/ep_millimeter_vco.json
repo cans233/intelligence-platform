@@ -1,0 +1,28 @@
+{
+  "family_id": "FAM-MMWAVE-VCO-2024",
+  "country": "EP",
+  "application_number": "EP24201234.5",
+  "publication_number": "EP4567890A1",
+  "title": "Adaptive impedance matching network for a multi-band radio-frequency front end",
+  "filing_date": "2024-07-11",
+  "publication_date": "2025-01-15",
+  "legal_status": "Application published",
+  "applicant": "Aurora RF GmbH",
+  "inventors": ["Marta Klein"],
+  "classifications": [
+    {"scheme": "IPC", "code": "H04B1/40"},
+    {"scheme": "CPC", "code": "H04B1/40"}
+  ],
+  "abstract": "An impedance matching network switches between multiple radio-frequency bands while maintaining low insertion loss.",
+  "description": "A switchable capacitor array and controller adapt the matching network to the selected operating band.",
+  "claims": [
+    {"claim_no": 1, "claim_type": "INDEPENDENT", "text": "A radio-frequency front-end impedance matching network comprising a switchable capacitor array and a controller."}
+  ],
+  "source_code": "EPO",
+  "source_record_id": "EPO-EP4567890A1",
+  "priority_number": "EP24201234.5",
+  "priority_date": "2024-07-11",
+  "legal_events": [
+    {"event_date": "2025-01-15", "event_code": "PUBLICATION", "event_description": "European patent application published", "legal_status": "Application published"}
+  ]
+}

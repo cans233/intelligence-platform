@@ -11,4 +11,6 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
 COPY backend /app/backend
 COPY migrations /app/migrations
+COPY scripts /app/scripts
+COPY fixtures /app/fixtures
 

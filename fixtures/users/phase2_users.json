@@ -1,0 +1,18 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@xinghe.example",
+    "display_name": "系统管理员",
+    "password": "Admin-Phase2-2026!",
+    "role_code": "system_admin",
+    "role_name": "系统管理员"
+  },
+  {
+    "username": "ip.analyst",
+    "email": "ip.analyst@xinghe.example",
+    "display_name": "知识产权专员",
+    "password": "Patent-Review-2026!",
+    "role_code": "ip_analyst",
+    "role_name": "知识产权人员"
+  }
+]

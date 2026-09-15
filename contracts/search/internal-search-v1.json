@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Internal Search v1",
+  "type": "object",
+  "required": ["code", "data", "message", "trace_id"],
+  "properties": {
+    "code": { "type": "integer" },
+    "message": { "type": "string" },
+    "trace_id": { "type": "string" },
+    "data": {
+      "type": "object",
+      "required": ["items", "page", "page_size", "total"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "entity_type", "title", "hit_reasons"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "entity_type": {
+                "type": "string",
+                "enum": ["patent", "project", "technology", "document"]
+              },
+              "title": { "type": "string" },
+              "snippet": { "type": ["string", "null"] },
+              "hit_reasons": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "page": { "type": "integer", "minimum": 1 },
+        "page_size": { "type": "integer", "minimum": 1 },
+        "total": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

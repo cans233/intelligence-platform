@@ -1,0 +1,28 @@
+{
+  "family_id": "FAM-MMWAVE-VCO-2024",
+  "country": "US",
+  "application_number": "US18/765321",
+  "publication_number": "US20250123456A1",
+  "title": "Adaptive calibration circuit for millimeter-wave oscillator",
+  "filing_date": "2024-09-28",
+  "publication_date": "2025-04-03",
+  "legal_status": "Pending",
+  "applicant": "Northstar Circuits Inc.",
+  "inventors": ["Olivia Chen"],
+  "classifications": [
+    {"scheme": "IPC", "code": "H03B5/04"},
+    {"scheme": "CPC", "code": "H03B5/04"}
+  ],
+  "abstract": "An adaptive calibration circuit dynamically adjusts oscillator segments based on measured phase noise and operating temperature.",
+  "description": "The circuit combines a sensor, controller and segmented tuning network for millimeter-wave oscillator calibration.",
+  "claims": [
+    {"claim_no": 1, "claim_type": "INDEPENDENT", "text": "An oscillator calibration circuit comprising a sensor, a controller, and a segmented tuning network."}
+  ],
+  "source_code": "USPTO",
+  "source_record_id": "USPTO-US20250123456A1",
+  "priority_number": "US18/765321",
+  "priority_date": "2024-09-28",
+  "legal_events": [
+    {"event_date": "2025-04-03", "event_code": "PUBLICATION", "event_description": "Published application", "legal_status": "Pending"}
+  ]
+}

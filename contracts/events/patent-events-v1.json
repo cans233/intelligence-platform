@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Patent Acquisition Events v1",
+  "type": "object",
+  "required": ["event_id", "event_type", "occurred_at", "data"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "patent.candidate.discovered",
+        "patent.source_record.saved",
+        "patent.normalized",
+        "patent.fulltext.fetched",
+        "patent.family.fetched",
+        "patent.legal_events.fetched"
+      ]
+    },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "trace_id": { "type": ["string", "null"] },
+    "data": {
+      "type": "object",
+      "required": ["source_code", "source_record_id", "discovery_path"],
+      "properties": {
+        "source_code": { "type": "string" },
+        "source_record_id": { "type": "string" },
+        "publication_id": { "type": ["string", "null"], "format": "uuid" },
+        "discovery_path": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "payload": { "type": ["object", "null"] }
+      }
+    }
+  }
+}

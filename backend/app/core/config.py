@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://app:app@localhost:5432/intelligence_platform"
     app_name: str = "intelligence-platform-api"
+    auth_secret: str = "phase2-development-secret-change-me"
+    access_token_ttl_minutes: int = 480
 
     model_config = SettingsConfigDict(
         env_file=".env",

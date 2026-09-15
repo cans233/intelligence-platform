@@ -1,0 +1,442 @@
+openapi: 3.1.0
+info:
+  title: Company Technology Intelligence Platform API
+  version: 0.2.0
+  description: Phase 2 integration contract for fact APIs and basic RBAC.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeLogin'
+  /me:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeUser'
+  /patents:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopePatentPage'
+  /patents/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopePatentDetail'
+        '404':
+          $ref: '#/components/responses/EnvelopeError'
+  /patents/{id}/claims:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeClaims'
+  /patents/{id}/family:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeFamily'
+  /patents/{id}/citations:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeCitations'
+  /patents/{id}/sources:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeSources'
+  /projects:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeProjectPage'
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeProjectDetail'
+  /projects/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeProjectDetail'
+    patch:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeProjectDetail'
+  /technologies:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeTechnologyPage'
+  /technologies/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeTechnologyDetail'
+  /documents:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeDocumentPage'
+  /documents/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeDocumentDetail'
+  /documents/{id}/versions:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeDocumentVersions'
+  /jobs:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeJobs'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string, format: password }
+    User:
+      type: object
+      required: [id, username, email, display_name, roles]
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        email: { type: [string, 'null'], format: email }
+        display_name: { type: string }
+        roles: { type: array, items: { type: string } }
+    PatentListItem:
+      type: object
+      required: [id, family_id, title, publication_number, application_number, country, applicant_names, publication_date, ipc_codes, cpc_codes, legal_status, status, source_codes, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        family_id: { type: string }
+        title: { type: string }
+        publication_number: { type: string }
+        application_number: { type: string }
+        country: { type: string }
+        applicant_names: { type: array, items: { type: string } }
+        publication_date: { type: [string, 'null'], format: date }
+        ipc_codes: { type: array, items: { type: string } }
+        cpc_codes: { type: array, items: { type: string } }
+        legal_status: { type: [string, 'null'] }
+        status: { type: string }
+        source_codes: { type: array, items: { type: string } }
+        updated_at: { type: string, format: date-time }
+    Person:
+      type: object
+      required: [id, name, country]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        country: { type: [string, 'null'] }
+    Claim:
+      type: object
+      required: [id, claim_no, claim_type, text]
+      properties:
+        id: { type: string, format: uuid }
+        claim_no: { type: integer }
+        claim_type: { type: [string, 'null'] }
+        text: { type: string }
+    Classification:
+      type: object
+      required: [id, scheme, code, raw_code]
+      properties:
+        id: { type: string, format: uuid }
+        scheme: { type: string }
+        code: { type: string }
+        raw_code: { type: [string, 'null'] }
+    FamilyMember:
+      type: object
+      required: [id, publication_id, country, publication_number, publication_date, legal_status]
+      properties:
+        id: { type: string, format: uuid }
+        publication_id: { type: string, format: uuid }
+        country: { type: string }
+        publication_number: { type: string }
+        publication_date: { type: [string, 'null'], format: date }
+        legal_status: { type: [string, 'null'] }
+    Citation:
+      type: object
+      required: [id, citing_publication_id, citing_publication_number, citation_type, cited_publication_number, cited_publication_id]
+      properties:
+        id: { type: string, format: uuid }
+        citing_publication_id: { type: string, format: uuid }
+        citing_publication_number: { type: [string, 'null'] }
+        citation_type: { type: string }
+        cited_publication_number: { type: [string, 'null'] }
+        cited_publication_id: { type: [string, 'null'], format: uuid }
+    SourceRecord:
+      type: object
+      required: [id, source_code, source_record_id, fetched_at, raw_data]
+      properties:
+        id: { type: string, format: uuid }
+        source_code: { type: string }
+        source_record_id: { type: string }
+        fetched_at: { type: string, format: date-time }
+        raw_data: { type: object }
+    LegalEvent:
+      type: object
+      required: [id, event_date, event_code, event_description, legal_status, source_record_id]
+      properties:
+        id: { type: string, format: uuid }
+        event_date: { type: string, format: date }
+        event_code: { type: string }
+        event_description: { type: string }
+        legal_status: { type: [string, 'null'] }
+        source_record_id: { type: [string, 'null'], format: uuid }
+    PatentDetail:
+      allOf:
+        - $ref: '#/components/schemas/PatentListItem'
+        - type: object
+          required: [filing_date, publication_date, priority_date, abstract, description, applicants, inventors, classifications, claims, family_members, citations, legal_events, sources, normalized_fields, ai_enhancements, human_conclusions, discovery_path, created_at, updated_at]
+          properties:
+            filing_date: { type: [string, 'null'], format: date }
+            priority_date: { type: [string, 'null'], format: date }
+            abstract: { type: [string, 'null'] }
+            description: { type: [string, 'null'] }
+            applicants: { type: array, items: { $ref: '#/components/schemas/Person' } }
+            inventors: { type: array, items: { $ref: '#/components/schemas/Person' } }
+            classifications: { type: array, items: { $ref: '#/components/schemas/Classification' } }
+            claims: { type: array, items: { $ref: '#/components/schemas/Claim' } }
+            family_members: { type: array, items: { $ref: '#/components/schemas/FamilyMember' } }
+            citations:
+              type: object
+              required: [references, cited_by]
+              properties:
+                references: { type: array, items: { $ref: '#/components/schemas/Citation' } }
+                cited_by: { type: array, items: { $ref: '#/components/schemas/Citation' } }
+            legal_events: { type: array, items: { $ref: '#/components/schemas/LegalEvent' } }
+            sources: { type: array, items: { $ref: '#/components/schemas/SourceRecord' } }
+            normalized_fields: { type: object }
+            ai_enhancements: { type: object }
+            human_conclusions: { type: object }
+            discovery_path: { type: array, items: { type: string } }
+            created_at: { type: string, format: date-time }
+    Project:
+      type: object
+      required: [id, code, name, description, status, organization, department, owner, technologies, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        status: { type: string }
+        organization: { $ref: '#/components/schemas/Reference' }
+        department: { type: [object, 'null'] }
+        owner: { type: [object, 'null'] }
+        technologies: { type: array, items: { $ref: '#/components/schemas/Reference' } }
+        documents: { type: array, items: { type: object } }
+        company_patents: { type: array, items: { type: object } }
+        external_related_patents: { type: array, items: { type: object } }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Reference:
+      type: object
+      required: [id, code, name]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: [string, 'null'] }
+        name: { type: string }
+    Technology:
+      type: object
+      required: [id, name, domain, description, lifecycle_stage, keywords, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        domain: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        lifecycle_stage: { type: [string, 'null'] }
+        keywords: { type: array, items: { type: string } }
+        projects: { type: array, items: { $ref: '#/components/schemas/Reference' } }
+        patents: { type: array, items: { type: object } }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Document:
+      type: object
+      required: [id, name, project, uploaded_by, file_type, storage_location, status, confidentiality, current_version_no, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        project: { type: [object, 'null'] }
+        uploaded_by: { $ref: '#/components/schemas/Reference' }
+        file_type: { type: string }
+        storage_location: { type: string }
+        status: { type: string }
+        confidentiality: { type: string }
+        current_version_no: { type: [integer, 'null'] }
+        versions: { type: array, items: { type: object } }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ProjectCreate:
+      type: object
+      required: [organization_id, code, name]
+      properties:
+        organization_id: { type: string, format: uuid }
+        department_id: { type: [string, 'null'], format: uuid }
+        owner_id: { type: [string, 'null'], format: uuid }
+        code: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        status: { type: string }
+        classification: { type: [string, 'null'] }
+    Envelope:
+      type: object
+      required: [code, data, message, trace_id]
+      properties:
+        code: { type: integer }
+        data: {}
+        message: { type: string }
+        trace_id: { type: string }
+  responses:
+    EnvelopeError:
+      description: Error envelope
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeLogin:
+      description: Login response
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required: [access_token, token_type, user]
+                    properties:
+                      access_token: { type: string }
+                      token_type: { type: string }
+                      user: { $ref: '#/components/schemas/User' }
+    EnvelopeUser:
+      description: User response
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopePatentPage:
+      description: Patent page
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopePatentDetail:
+      description: Patent detail
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeClaims:
+      description: Claims
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeFamily:
+      description: Family members
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeCitations:
+      description: Citation directions
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeSources:
+      description: Source records
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeProjectPage:
+      description: Project page
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeProjectDetail:
+      description: Project detail
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeTechnologyPage:
+      description: Technology page
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeTechnologyDetail:
+      description: Technology detail
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeDocumentPage:
+      description: Document page
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeDocumentDetail:
+      description: Document detail
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeDocumentVersions:
+      description: Document versions
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
+    EnvelopeJobs:
+      description: Task job page
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Envelope' }
