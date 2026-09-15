@@ -63,11 +63,21 @@ $env:DATABASE_URL="postgresql+psycopg://app:app@localhost:5432/intelligence_plat
 
 ```bash
 cd frontend
-pnpm install
+corepack enable
+corepack prepare pnpm@9.15.9 --activate
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
 打开终端输出的本地地址（默认 `http://localhost:5173/login`）。Mock 登录默认填充 `admin / 1234`，也可使用任意非空用户名和至少 4 位密码。
+
+前端默认使用 Contract Mock。需要联调真实核心 API 时，先创建本地环境文件：
+
+```bash
+cp .env.example .env.local
+```
+
+将 `.env.local` 中的 `VITE_API_MODE` 改为 `real`，然后运行 `pnpm dev`。Vite 会将 `/api` 代理到 `http://localhost:8000`；登录使用 `admin / Admin-Phase2-2026!`。Real 模式下登录、专利和项目访问真实 API，内部搜索、外部监控和运营页仍使用 Contract Mock。
 
 页面入口：
 
@@ -112,8 +122,9 @@ python -m pytest
 
 ```bash
 cd frontend
-pnpm build
+pnpm install --frozen-lockfile
 pnpm test
+pnpm build
 ```
 
-页面通过 `src/api/` 下的 `patent.ts`、`project.ts`、`search.ts` 访问 Contract Mock。本阶段不连接真实后端或 OpenSearch。
+页面只通过 `src/api/` 访问数据。Patent 和 Project API 会将 Shared OpenAPI DTO 转换为页面 ViewModel；前端不直连 PostgreSQL、OpenSearch 或外部专利站点。
