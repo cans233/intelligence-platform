@@ -40,6 +40,9 @@ def test_project_patent_relation_type_contract() -> None:
     columns = ProjectPatent.__table__.c
     assert "relation_type" in columns
     assert columns.relation_type.nullable is False
+    assert columns.relation_type.default.arg == "EXTERNAL"
+    constraints = {constraint.name for constraint in ProjectPatent.__table__.constraints}
+    assert "ck_company_project_patent_relation_type" in constraints
 
 
 def test_project_detail_separates_company_and_external_patents() -> None:
