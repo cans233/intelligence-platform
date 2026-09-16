@@ -16,6 +16,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Legacy RELATED rows have no ownership field. CN publications are the
+    # company-owned fixture/data convention; all other legacy relations remain
+    # external until an explicit ownership fact is available.
+    op.execute(
+        "UPDATE company.project_patent AS project_patent "
+        "SET relation_type = 'COMPANY' "
+        "FROM patent.publication AS publication "
+        "JOIN patent.application AS application ON application.id = publication.application_id "
+        "WHERE project_patent.publication_id = publication.id "
+        "AND application.country = 'CN' "
+        "AND project_patent.relation_type NOT IN ('COMPANY', 'EXTERNAL')"
+    )
     op.execute(
         "UPDATE company.project_patent "
         "SET relation_type = 'EXTERNAL' "
