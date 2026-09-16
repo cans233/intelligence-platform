@@ -438,7 +438,7 @@ components:
       required: [code, data, message, trace_id]
       properties:
         code: { type: string }
-        data: {}
+        data: { type: [object, 'null'] }
         message: { type: string }
         trace_id: { type: string }
     EnvelopeLoginData:
