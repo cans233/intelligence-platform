@@ -150,9 +150,9 @@ class ProjectCreate(BaseModel):
 
 
 class ProjectPatch(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=256)
+    name: str = Field(default=None, min_length=1, max_length=256)
     description: str | None = None
-    status: str | None = None
+    status: str = None
     department_id: UUID | None = None
     owner_id: UUID | None = None
     classification: str | None = None
@@ -234,7 +234,7 @@ class DocumentListItemDto(BaseModel):
     updated_at: datetime
 
 
-class DocumentVersionDto(BaseModel):
+class DocumentVersionDto(OrmDto):
     id: UUID
     document_id: UUID
     version_no: int

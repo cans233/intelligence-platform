@@ -54,7 +54,7 @@ $env:DATABASE_URL="postgresql+psycopg://app:app@localhost:5432/intelligence_plat
 正式 API 前缀为 `/api/v1`，包括登录、当前用户、专利事实、项目、技术、文档和任务查询接口。所有业务响应遵循：
 
 ```json
-{"code": 0, "data": {}, "message": "ok", "trace_id": "..."}
+{"code": "OK", "data": {}, "message": "ok", "trace_id": "..."}
 ```
 
 外部采集仅定义 `PatentSourceAdapter` 契约，位于 `backend/app/ingestion/contracts.py`，本阶段不包含网页爬虫或真实数据源连接。

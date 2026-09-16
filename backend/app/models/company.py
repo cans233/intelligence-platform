@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, Uuid, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, Uuid, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -135,6 +135,10 @@ class ProjectPatent(Base):
     __table_args__ = (
         Index("ix_company_project_patent_patent_id", "publication_id"),
         UniqueConstraint("project_id", "publication_id", name="uq_company_project_patent"),
+        CheckConstraint(
+            "relation_type IN ('COMPANY', 'EXTERNAL')",
+            name="ck_company_project_patent_relation_type",
+        ),
         {"schema": "company"},
     )
 
@@ -144,7 +148,7 @@ class ProjectPatent(Base):
     publication_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("patent.publication.id", ondelete="CASCADE"), primary_key=True
     )
-    relation_type: Mapped[str] = mapped_column(String(32), nullable=False, default="RELATED")
+    relation_type: Mapped[str] = mapped_column(String(32), nullable=False, default="EXTERNAL")
     relevance_score: Mapped[int | None] = mapped_column(Integer)
     relation_reason: Mapped[str | None] = mapped_column(Text)
 

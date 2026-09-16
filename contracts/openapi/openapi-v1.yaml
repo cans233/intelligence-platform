@@ -92,6 +92,12 @@ paths:
     patch:
       parameters:
         - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectPatch'
       responses:
         '200':
           $ref: '#/components/responses/EnvelopeProjectDetail'
@@ -108,6 +114,16 @@ paths:
         '200':
           $ref: '#/components/responses/EnvelopeTechnologyDetail'
   /documents:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreate'
+      responses:
+        '200':
+          $ref: '#/components/responses/EnvelopeDocumentDetail'
     get:
       responses:
         '200':
@@ -221,6 +237,12 @@ components:
         citation_type: { type: string }
         cited_publication_number: { type: [string, 'null'] }
         cited_publication_id: { type: [string, 'null'], format: uuid }
+    CitationDirections:
+      type: object
+      required: [references, cited_by]
+      properties:
+        references: { type: array, items: { $ref: '#/components/schemas/Citation' } }
+        cited_by: { type: array, items: { $ref: '#/components/schemas/Citation' } }
     SourceRecord:
       type: object
       required: [id, source_code, source_record_id, fetched_at, raw_data]
@@ -323,6 +345,21 @@ components:
         versions: { type: array, items: { type: object } }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+    DocumentVersion:
+      type: object
+      required: [id, document_id, version_no, file_type, storage_location, uploaded_by, parse_status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        version_no: { type: integer }
+        file_type: { type: string }
+        storage_location: { type: string }
+        checksum: { type: [string, 'null'] }
+        file_size_bytes: { type: [integer, 'null'] }
+        uploaded_by: { type: string, format: uuid }
+        parse_status: { type: string }
+        parse_error: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
     ProjectCreate:
       type: object
       required: [organization_id, code, name]
@@ -335,108 +372,273 @@ components:
         description: { type: [string, 'null'] }
         status: { type: string }
         classification: { type: [string, 'null'] }
+    ProjectPatch:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        status: { type: string }
+        department_id: { type: [string, 'null'], format: uuid }
+        owner_id: { type: [string, 'null'], format: uuid }
+        classification: { type: [string, 'null'] }
+    DocumentCreate:
+      type: object
+      required: [name, file_type, storage_location]
+      properties:
+        name: { type: string }
+        project_id: { type: [string, 'null'], format: uuid }
+        file_type: { type: string }
+        storage_location: { type: string }
+        confidentiality: { type: string, default: INTERNAL }
+    PatentPage:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/PatentListItem' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+    ProjectPage:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Project' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+    TechnologyPage:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Technology' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+    DocumentPage:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Document' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+    JobPage:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Job' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+    Job:
+      type: object
+      additionalProperties: true
     Envelope:
       type: object
       required: [code, data, message, trace_id]
       properties:
-        code: { type: integer }
+        code: { type: string }
         data: {}
         message: { type: string }
         trace_id: { type: string }
+    EnvelopeLoginData:
+      type: object
+      required: [access_token, token_type, user]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string }
+        user: { $ref: '#/components/schemas/User' }
+    EnvelopeLogin:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/EnvelopeLoginData' }
+    EnvelopeMe:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/User' }
+    EnvelopePatentList:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/PatentPage' }
+    EnvelopePatentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/PatentDetail' }
+    Claims:
+      type: array
+      items: { $ref: '#/components/schemas/Claim' }
+    Family:
+      type: array
+      items: { $ref: '#/components/schemas/FamilyMember' }
+    Sources:
+      type: array
+      items: { $ref: '#/components/schemas/SourceRecord' }
+    DocumentVersions:
+      type: array
+      items: { $ref: '#/components/schemas/DocumentVersion' }
+    EnvelopeClaims:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Claims' }
+    EnvelopeFamily:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Family' }
+    EnvelopeCitations:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/CitationDirections' }
+    EnvelopeSources:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Sources' }
+    EnvelopeDocumentVersions:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/DocumentVersions' }
+    EnvelopeJobs:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/JobPage' }
+    EnvelopeProjectList:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/ProjectPage' }
+    EnvelopeProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Project' }
+    EnvelopeTechnologyList:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/TechnologyPage' }
+    EnvelopeTechnologyDetail:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Technology' }
+    EnvelopeDocumentList:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/DocumentPage' }
+    EnvelopeDocumentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Document' }
   responses:
     EnvelopeError:
       description: Error envelope
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+           schema: { $ref: '#/components/schemas/Envelope' }
     EnvelopeLogin:
       description: Login response
       content:
         application/json:
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/Envelope'
-              - type: object
-                properties:
-                  data:
-                    type: object
-                    required: [access_token, token_type, user]
-                    properties:
-                      access_token: { type: string }
-                      token_type: { type: string }
-                      user: { $ref: '#/components/schemas/User' }
+          schema: { $ref: '#/components/schemas/EnvelopeLogin' }
     EnvelopeUser:
       description: User response
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeMe' }
     EnvelopePatentPage:
       description: Patent page
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopePatentList' }
     EnvelopePatentDetail:
       description: Patent detail
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopePatentDetail' }
     EnvelopeClaims:
       description: Claims
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+           schema: { $ref: '#/components/schemas/EnvelopeClaims' }
     EnvelopeFamily:
       description: Family members
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeFamily' }
     EnvelopeCitations:
       description: Citation directions
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeCitations' }
     EnvelopeSources:
       description: Source records
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeSources' }
     EnvelopeProjectPage:
       description: Project page
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeProjectList' }
     EnvelopeProjectDetail:
       description: Project detail
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeProjectDetail' }
     EnvelopeTechnologyPage:
       description: Technology page
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeTechnologyList' }
     EnvelopeTechnologyDetail:
       description: Technology detail
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeTechnologyDetail' }
     EnvelopeDocumentPage:
       description: Document page
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeDocumentList' }
     EnvelopeDocumentDetail:
       description: Document detail
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeDocumentDetail' }
     EnvelopeDocumentVersions:
       description: Document versions
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeDocumentVersions' }
     EnvelopeJobs:
       description: Task job page
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Envelope' }
+          schema: { $ref: '#/components/schemas/EnvelopeJobs' }

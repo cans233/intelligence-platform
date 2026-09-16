@@ -1,0 +1,44 @@
+name: backend-ci
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: intelligence_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U app -d intelligence_platform"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/intelligence_platform
+      REQUIRE_POSTGRES_INTEGRATION: '1'
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend dependencies
+        run: python -m pip install -r backend/requirements-dev.txt
+      - name: Upgrade database
+        run: python -m alembic -c migrations/alembic.ini upgrade head
+      - name: Seed fixtures
+        run: python scripts/seed_fixtures.py
+      - name: Migration smoke
+        run: python scripts/migration_smoke.py
+      - name: Backend tests
+        run: python -m pytest -q

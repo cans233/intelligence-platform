@@ -11,5 +11,7 @@
     {"name": "毫米波压控振荡器", "domain": "射频芯片", "lifecycle_stage": "重点跟踪", "keywords": "毫米波,VCO,相噪,数字校准"},
     {"name": "数字校准环路", "domain": "射频芯片", "lifecycle_stage": "方案验证", "keywords": "数字校准,温度补偿,调谐线性度"}
   ],
-  "patent_publication_numbers": ["CN118765432A", "US20250123456A1", "EP4567890A1"]
+  "patent_publication_numbers": ["CN118765432A", "US20250123456A1", "EP4567890A1"],
+  "company_patent_publication_numbers": ["CN118765432A"],
+  "external_related_patent_publication_numbers": ["US20250123456A1", "EP4567890A1"]
 }
