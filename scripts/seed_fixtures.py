@@ -71,6 +71,7 @@ def get_or_create(db: Session, model, identity: dict, values: dict | None = None
 def seed_users(db: Session) -> dict[str, User]:
     users = {}
     permission_names = {
+        "patent.read": "查看专利",
         "project.read": "查看项目",
         "project.write": "编辑项目",
         "technology.read": "查看技术",
@@ -284,8 +285,31 @@ def seed_company_documents(db: Session, users: dict[str, User], publications: di
         get_or_create(db, ProjectTechnology, {"project_id": project.id, "technology_id": technology.id})
         for publication_number in item["patent_publication_numbers"]:
             get_or_create(db, TechnologyPatent, {"technology_id": technology.id, "publication_id": publications[publication_number].id})
+    company_patent_numbers = set(item.get("company_patent_publication_numbers", []))
+    external_patent_numbers = set(item.get("external_related_patent_publication_numbers", []))
+    project_patent_numbers = set(item["patent_publication_numbers"])
+    if (
+        company_patent_numbers & external_patent_numbers
+        or company_patent_numbers | external_patent_numbers != project_patent_numbers
+    ):
+        raise ValueError("Project patent fixture must partition publications into COMPANY and EXTERNAL")
     for publication_number in item["patent_publication_numbers"]:
-        get_or_create(db, ProjectPatent, {"project_id": project.id, "publication_id": publications[publication_number].id}, {"relevance_score": 85, "relation_reason": "毫米波收发前端技术链关联"})
+        if publication_number in company_patent_numbers:
+            relation_type = "COMPANY"
+        elif publication_number in external_patent_numbers:
+            relation_type = "EXTERNAL"
+        else:
+            raise ValueError(f"Unclassified project patent fixture: {publication_number}")
+        get_or_create(
+            db,
+            ProjectPatent,
+            {"project_id": project.id, "publication_id": publications[publication_number].id},
+            {
+                "relation_type": relation_type,
+                "relevance_score": 85,
+                "relation_reason": "毫米波收发前端技术链关联",
+            },
+        )
     doc_item = load_json("fixtures/documents/mmwave_requirements.json")
     document = get_or_create(
         db, Document, {"name": doc_item["name"]}, {"id": stable("document", doc_item["name"]), "project_id": project.id, "uploaded_by": users["ip.analyst"].id, "file_type": doc_item["file_type"], "storage_location": doc_item["storage_location"], "confidentiality": doc_item["confidentiality"], "current_version_no": 2},

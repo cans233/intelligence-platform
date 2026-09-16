@@ -177,8 +177,12 @@ def project_detail(project: Project) -> dict:
         company_patents=[
             project_patent(item)
             for item in sorted(project.patents, key=lambda value: value.publication.title)
+            if item.relation_type == "COMPANY"
         ],
-        # No separate external-relation fact exists in the Phase 2 schema.
-        external_related_patents=[],
+        external_related_patents=[
+            project_patent(item)
+            for item in sorted(project.patents, key=lambda value: value.publication.title)
+            if item.relation_type == "EXTERNAL"
+        ],
     )
     return data.model_dump(mode="json")

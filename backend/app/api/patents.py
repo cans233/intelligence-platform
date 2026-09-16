@@ -5,7 +5,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from backend.app.api.common import ok
-from backend.app.api.dependencies import get_db
+from backend.app.api.dependencies import get_db, require_permission
 from backend.app.api.errors import ApiHttpException
 from backend.app.api.schemas import (
     CitationDirectionsDto,
@@ -31,6 +31,7 @@ from backend.app.models import (
     PatentLegalEvent,
     PatentPublication,
     SourceRecord,
+    User,
 )
 
 router = APIRouter(prefix="/patents", tags=["patents"])
@@ -43,6 +44,7 @@ def list_patents(
     page_size: int = Query(20, ge=1, le=100),
     keyword: str | None = None,
     country: str | None = None,
+    user: User = Depends(require_permission("patent.read")),
     db: Session = Depends(get_db),
 ):
     query = (
@@ -84,7 +86,12 @@ def list_patents(
 
 
 @router.get("/{patent_id}")
-def get_patent(patent_id: UUID, request: Request, db: Session = Depends(get_db)):
+def get_patent(
+    patent_id: UUID,
+    request: Request,
+    user: User = Depends(require_permission("patent.read")),
+    db: Session = Depends(get_db),
+):
     publication = db.scalar(
         select(PatentPublication)
         .options(
@@ -114,7 +121,12 @@ def get_patent(patent_id: UUID, request: Request, db: Session = Depends(get_db))
 
 
 @router.get("/{patent_id}/claims")
-def get_claims(patent_id: UUID, request: Request, db: Session = Depends(get_db)):
+def get_claims(
+    patent_id: UUID,
+    request: Request,
+    user: User = Depends(require_permission("patent.read")),
+    db: Session = Depends(get_db),
+):
     ensure_publication(patent_id, db)
     claims = db.scalars(
         select(PatentClaim)
@@ -125,7 +137,12 @@ def get_claims(patent_id: UUID, request: Request, db: Session = Depends(get_db))
 
 
 @router.get("/{patent_id}/family")
-def get_family(patent_id: UUID, request: Request, db: Session = Depends(get_db)):
+def get_family(
+    patent_id: UUID,
+    request: Request,
+    user: User = Depends(require_permission("patent.read")),
+    db: Session = Depends(get_db),
+):
     publication = ensure_publication(patent_id, db)
     members = db.scalars(
         select(PatentFamilyMember)
@@ -137,7 +154,12 @@ def get_family(patent_id: UUID, request: Request, db: Session = Depends(get_db))
 
 
 @router.get("/{patent_id}/citations")
-def get_citations(patent_id: UUID, request: Request, db: Session = Depends(get_db)):
+def get_citations(
+    patent_id: UUID,
+    request: Request,
+    user: User = Depends(require_permission("patent.read")),
+    db: Session = Depends(get_db),
+):
     ensure_publication(patent_id, db)
     references = db.scalars(
         select(PatentCitation)
@@ -159,7 +181,12 @@ def get_citations(patent_id: UUID, request: Request, db: Session = Depends(get_d
 
 
 @router.get("/{patent_id}/sources")
-def get_sources(patent_id: UUID, request: Request, db: Session = Depends(get_db)):
+def get_sources(
+    patent_id: UUID,
+    request: Request,
+    user: User = Depends(require_permission("patent.read")),
+    db: Session = Depends(get_db),
+):
     ensure_publication(patent_id, db)
     sources = db.scalars(
         select(SourceRecord)
