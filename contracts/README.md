@@ -13,7 +13,7 @@ All REST responses use:
 
 ```json
 {
-  "code": 0,
+  "code": "OK",
   "data": {},
   "message": "ok",
   "trace_id": "..."

@@ -9,7 +9,7 @@ def trace_id(request: Request) -> str:
 
 
 def ok(data, request: Request, message: str = "ok") -> dict:
-    return {"code": 0, "data": data, "message": message, "trace_id": trace_id(request)}
+    return {"code": "OK", "data": data, "message": message, "trace_id": trace_id(request)}
 
 
 def error_response(request: Request, status: int, code: str, message: str) -> JSONResponse:

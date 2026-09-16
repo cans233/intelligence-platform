@@ -42,7 +42,7 @@ def test_phase2_api_happy_path_and_permissions() -> None:
         json={"username": "admin", "password": "Admin-Phase2-2026!"},
     )
     assert login.status_code == 200
-    assert login.json()["code"] == 0
+    assert login.json()["code"] == "OK"
     assert login.json()["data"]["access_token"]
     admin_headers = {"Authorization": f"Bearer {login.json()['data']['access_token']}"}
 
@@ -150,6 +150,53 @@ def test_phase2_api_not_found_and_auth_failures() -> None:
     unauthorized = client.get("/api/v1/me")
     assert unauthorized.status_code == 401
     assert unauthorized.json()["code"] == "AUTH_REQUIRED"
+
+
+def test_patent_api_requires_read_permission() -> None:
+    client = _client()
+    missing_id = UUID("00000000-0000-0000-0000-000000000000")
+
+    unauthenticated = client.get("/api/v1/patents")
+    assert unauthenticated.status_code == 401
+    assert unauthenticated.json()["code"] == "AUTH_REQUIRED"
+    assert client.get(f"/api/v1/patents/{missing_id}/sources").status_code == 401
+
+    from backend.app.db.session import SessionLocal
+    from backend.app.models import Permission, RolePermission, User, UserRole
+
+    removed_links = []
+    with SessionLocal() as db:
+        analyst = db.scalar(select(User).where(User.username == "ip.analyst"))
+        assert analyst is not None
+        permission = db.scalar(select(Permission).where(Permission.code == "patent.read"))
+        assert permission is not None
+        role_ids = db.scalars(select(UserRole.role_id).where(UserRole.user_id == analyst.id)).all()
+        links = db.scalars(
+            select(RolePermission).where(
+                RolePermission.permission_id == permission.id,
+                RolePermission.role_id.in_(role_ids),
+            )
+        ).all()
+        removed_links = [(link.role_id, link.permission_id) for link in links]
+        for link in links:
+            db.delete(link)
+        db.commit()
+
+    login = client.post(
+        "/api/v1/auth/login",
+        json={"username": "ip.analyst", "password": "Patent-Review-2026!"},
+    )
+    assert login.status_code == 200
+    headers = {"Authorization": f"Bearer {login.json()['data']['access_token']}"}
+    try:
+        denied = client.get("/api/v1/patents", headers=headers)
+        assert denied.status_code == 403
+        assert denied.json()["code"] == "PERMISSION_DENIED"
+    finally:
+        with SessionLocal() as db:
+            for role_id, permission_id in removed_links:
+                db.add(RolePermission(role_id=role_id, permission_id=permission_id))
+            db.commit()
 
 
 def test_phase2_database_constraints_and_source_preservation() -> None:

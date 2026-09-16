@@ -17,7 +17,7 @@ from backend.app.core.config import settings
 from backend.app.db.session import engine
 
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+app = FastAPI(title=settings.app_name, version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
