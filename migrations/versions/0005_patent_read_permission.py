@@ -1,7 +1,7 @@
 """Backfill the patent read permission for existing roles.
 
 Revision ID: 0005_patent_read_permission
-Revises: 0004_project_patent_relation_type
+Revises: 0004_project_patent_rel
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision: str = "0005_patent_read_permission"
-down_revision: Union[str, Sequence[str], None] = "0004_project_patent_relation_type"
+down_revision: Union[str, Sequence[str], None] = "0004_project_patent_rel"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
