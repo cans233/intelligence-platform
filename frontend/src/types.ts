@@ -51,7 +51,7 @@ export type SavedInternalSearch = SaveInternalSearchDto & {
   created_at: string
 }
 
-export type PatentClaim = { claim_no: number; claim_type: '独立' | '从属'; text: string }
+export type PatentClaim = { claim_no: number; claim_type: string; text: string }
 export type PatentFamilyMember = { id: string; country: string; publication_number: string; publication_date: string; legal_status: string }
 export type PatentCitation = { id: string; direction: '引用' | '被引用'; publication_number: string; title: string }
 export type PatentLegalEvent = { id: string; date: string; event: string; source: string }
@@ -77,7 +77,7 @@ export type PatentOfficialFacts = {
   legal_events: PatentLegalEvent[]
 }
 
-export type PatentDetailDto = {
+export type MockPatentDetail = {
   id: string
   title: string
   ownership: 'COMPANY' | 'EXTERNAL'
@@ -91,23 +91,45 @@ export type PatentDetailDto = {
   updated_at: string
 }
 
-export type PatentListItemDto = {
+export type MockPatentListItem = PatentListItemViewModel & {
+  applicant: string
+  record_quality: RecordQuality
+  ownership: MockPatentDetail['ownership']
+}
+
+export type PatentListItemViewModel = {
   id: string
   title: string
   publication_number: string
   application_number: string
   country: string
-  applicant: string
+  applicant_names: string[]
   publication_date: string
   ipc_codes: string[]
-  record_quality: RecordQuality
-  ownership: PatentDetailDto['ownership']
+  cpc_codes: string[]
+  legal_status: string
+  status: string
+  source_codes: string[]
+  updated_at: string
+}
+
+export type PatentDetailViewModel = {
+  id: string
+  title: string
+  official_facts: PatentOfficialFacts
+  normalized_fields: Array<{ label: string; value: string; source: string[] }>
+  ai_enhancements: { keywords: string[]; technical_problem: string; technical_effect: string }
+  human_conclusions: { notes: string[]; project_links: ProjectLink[] }
+  sources: Array<{ source: string; source_record_id: string; fetched_at: string }>
+  discovery_path: string[]
+  status: string
+  source_codes: string[]
+  updated_at: string
 }
 
 export type PatentListQueryDto = {
   keyword?: string
-  countries?: string[]
-  qualities?: RecordQuality[]
+  country?: string
   page?: number
   page_size?: number
 }
@@ -137,9 +159,33 @@ export type DocumentDto = {
   summary: string
 }
 
-export type ProjectPatentRelation = PatentListItemDto & { relevance: '高' | '中' | '低'; relation_reason: string }
+export type MockProjectPatentRelation = MockPatentListItem & { relevance: '高' | '中' | '低'; relation_reason: string }
 
-export type ProjectDetailDto = {
+export type ProjectTechnologyViewModel = { id: string; code?: string; name: string }
+export type ProjectDocumentViewModel = { id: string; name: string; file_type: string; status: string; current_version_no?: number }
+export type ProjectPatentRelationViewModel = { id: string; publication_number: string; title: string; country: string; relation_type: string; relevance_score?: number; relation_reason?: string }
+
+export type ProjectListItemViewModel = {
+  id: string
+  code: string
+  name: string
+  organization: string
+  department: string
+  owner: string
+  status: string
+  description: string
+  technologies: ProjectTechnologyViewModel[]
+  created_at: string
+  updated_at: string
+}
+
+export type ProjectDetailViewModel = ProjectListItemViewModel & {
+  documents: ProjectDocumentViewModel[]
+  company_patents: ProjectPatentRelationViewModel[]
+  external_related_patents: ProjectPatentRelationViewModel[]
+}
+
+export type MockProjectDetail = {
   id: string
   code: string
   name: string
@@ -152,8 +198,8 @@ export type ProjectDetailDto = {
   description: string
   technologies: TechnologyDto[]
   documents: DocumentDto[]
-  company_patents: ProjectPatentRelation[]
-  external_related_patents: ProjectPatentRelation[]
+  company_patents: MockProjectPatentRelation[]
+  external_related_patents: MockProjectPatentRelation[]
   member_count: number
   risk: '低' | '中' | '高'
 }

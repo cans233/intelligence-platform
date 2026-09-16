@@ -52,7 +52,7 @@ export function AppShell({ onLogout }: { onLogout: () => void }) {
     <Layout>
       <Header className="app-header">
         <div className="header-search"><Input value={search} onChange={(event) => setSearch(event.target.value)} onPressEnter={() => navigate(`/search?q=${encodeURIComponent(search)}`)} prefix={<SearchOutlined />} placeholder="搜索系统已拥有的数据" variant="borderless" aria-label="搜索系统已拥有的数据" /></div>
-        <Space size={18}><Tag color="blue">{getApiMode() === 'mock' ? 'CONTRACT MOCK' : 'REAL API'}</Tag><Badge dot><Button type="text" icon={<BellOutlined />} aria-label="通知" /></Badge><Dropdown menu={{ items: [{ key: 'profile', label: '账号设置', icon: <SettingOutlined /> }, { type: 'divider' }, { key: 'logout', label: '退出登录', icon: <LogoutOutlined />, onClick: onLogout }] }}><Button type="text" className="user-menu"><Avatar size={30} style={{ background: '#d8edff', color: '#155b8a' }}>管</Avatar><span>系统管理员</span><MoreOutlined /></Button></Dropdown></Space>
+        <Space size={18}><Tag color="blue">{getApiMode() === 'mock' ? 'CONTRACT MOCK' : 'REAL CORE · CONTRACT MOCK'}</Tag><Badge dot><Button type="text" icon={<BellOutlined />} aria-label="通知" /></Badge><Dropdown menu={{ items: [{ key: 'profile', label: '账号设置', icon: <SettingOutlined /> }, { type: 'divider' }, { key: 'logout', label: '退出登录', icon: <LogoutOutlined />, onClick: onLogout }] }}><Button type="text" className="user-menu"><Avatar size={30} style={{ background: '#d8edff', color: '#155b8a' }}>管</Avatar><span>系统管理员</span><MoreOutlined /></Button></Dropdown></Space>
       </Header>
       <Content id="main-content" tabIndex={-1} className="app-content"><Routes>
         <Route path="/dashboard" element={<DashboardPage />} />

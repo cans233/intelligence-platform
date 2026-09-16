@@ -4,16 +4,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { patentApi } from '../api/patent'
-import { DataCategoryTag, RecordQualityTag } from '../components/DataTags'
+import { DataCategoryTag } from '../components/DataTags'
 import { PageHeader } from '../components/PageHeader'
 import { StateBlock, stateFromUrl } from '../components/StateBlock'
-import type { PatentDetailDto, PatentListItemDto, PatentListQueryDto, RecordQuality } from '../types'
+import type { PatentDetailViewModel, PatentListItemViewModel, PatentListQueryDto } from '../types'
 
 const { Paragraph, Text, Title } = Typography
 
 export function PatentsPage() {
   const [query, setQuery] = useState<PatentListQueryDto>({ page: 1, page_size: 10 })
-  const [items, setItems] = useState<PatentListItemDto[]>([])
+  const [items, setItems] = useState<PatentListItemViewModel[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -38,22 +38,21 @@ export function PatentsPage() {
   const forcedState = stateFromUrl()
 
   return <>
-    <PageHeader eyebrow="证据资产 / PATENTS" title="专利库" description="浏览系统已入库的专利事实、记录质量和公司归属。" extra={<Tag color="blue">Contract 数据</Tag>} />
+    <PageHeader eyebrow="证据资产 / PATENTS" title="专利库" description="浏览系统已入库的专利事实、法律状态和数据来源。" extra={<Tag color="blue">事实 API</Tag>} />
     <Card className="table-card" variant="borderless">
       <div className="patent-filters">
-        <Input.Search value={query.keyword ?? ''} onChange={(event) => setQuery((current) => ({ ...current, keyword: event.target.value || undefined }))} onSearch={() => void load({ ...query, page: 1 })} placeholder="标题、公开号或申请人" enterButton="筛选" />
-        <Select aria-label="专利国家地区" mode="multiple" value={query.countries} placeholder="全部国家" options={['CN', 'US', 'EP', 'WO'].map((value) => ({ label: value, value }))} onChange={(countries) => void load({ ...query, countries, page: 1 })} />
-        <Select aria-label="专利记录质量" mode="multiple" value={query.qualities} placeholder="全部记录质量" options={[{ label: '已核验', value: 'VERIFIED' }, { label: '已标准化', value: 'NORMALIZED' }, { label: '来源冲突', value: 'CONFLICT' }, { label: '待核验', value: 'PENDING' }]} onChange={(qualities: RecordQuality[]) => void load({ ...query, qualities, page: 1 })} />
+        <Input.Search value={query.keyword ?? ''} onChange={(event) => setQuery((current) => ({ ...current, keyword: event.target.value || undefined }))} onSearch={() => void load({ ...query, page: 1 })} placeholder="标题、公开号或申请号" enterButton="筛选" />
+        <Select aria-label="专利国家地区" allowClear value={query.country} placeholder="全部国家" options={['CN', 'US', 'EP', 'WO'].map((value) => ({ label: value, value }))} onChange={(country) => void load({ ...query, country, page: 1 })} />
         <Button onClick={reset}>重置</Button>
       </div>
       {forcedState ? <StateBlock type={forcedState} onRetry={reset} /> : error ? <StateBlock type="error" onRetry={() => void load(query)} /> : loading ? <StateBlock type="loading" /> : items.length === 0 ? <StateBlock type="empty" onRetry={reset} /> : <><Table scroll={{ x: 1080 }} rowKey="id" dataSource={items} pagination={false} columns={[
-        { title: '专利', dataIndex: 'title', width: 330, render: (title: string, record: PatentListItemDto) => <Link to={`/patents/${record.id}`}><strong>{title}</strong><div className="table-sub">{record.publication_number}</div></Link> },
-        { title: '申请人', dataIndex: 'applicant', width: 240 },
+        { title: '专利', dataIndex: 'title', width: 330, render: (title: string, record: PatentListItemViewModel) => <Link to={`/patents/${record.id}`}><strong>{title}</strong><div className="table-sub">{record.publication_number}</div></Link> },
+        { title: '申请人', dataIndex: 'applicant_names', width: 240, render: (values: string[]) => values.join('、') || '暂无' },
         { title: '国家', dataIndex: 'country' },
         { title: '公开日', dataIndex: 'publication_date' },
-        { title: 'IPC', dataIndex: 'ipc_codes', render: (codes: string[]) => codes.map((code) => <Tag key={code}>{code}</Tag>) },
-        { title: '归属', dataIndex: 'ownership', render: (value: PatentListItemDto['ownership']) => <Tag color={value === 'COMPANY' ? 'cyan' : undefined}>{value === 'COMPANY' ? '公司专利' : '外部专利'}</Tag> },
-        { title: '记录质量', dataIndex: 'record_quality', render: (value: RecordQuality) => <RecordQualityTag value={value} /> },
+        { title: 'IPC', dataIndex: 'ipc_codes', render: (codes: string[]) => codes.length ? codes.map((code) => <Tag key={code}>{code}</Tag>) : '暂无' },
+        { title: '法律状态', dataIndex: 'legal_status', render: (value: string) => value || '暂无' },
+        { title: '数据来源', dataIndex: 'source_codes', render: (values: string[]) => values.length ? values.map((value) => <Tag key={value}>{value}</Tag>) : '暂无' },
       ]} /><Pagination className="table-pagination" current={query.page} pageSize={query.page_size} total={total} showSizeChanger={false} onChange={(page) => void load({ ...query, page })} /></>}
     </Card>
   </>
@@ -61,7 +60,7 @@ export function PatentsPage() {
 
 export function PatentDetailPage() {
   const { id = '' } = useParams()
-  const [patent, setPatent] = useState<PatentDetailDto | null>(null)
+  const [patent, setPatent] = useState<PatentDetailViewModel | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [notFound, setNotFound] = useState(false)
@@ -92,7 +91,7 @@ export function PatentDetailPage() {
   const facts = patent.official_facts
   return <>
     <div className="detail-breadcrumb"><Link to="/patents">专利库</Link><RightOutlined />{facts.publication_number}</div>
-    <PageHeader eyebrow="专利详情 / EVIDENCE" title={patent.title} description={`${facts.publication_number} · ${facts.applicant_names.join('、')}`} extra={<Space wrap><RecordQualityTag value={patent.record_quality} /><Tag>{patent.ownership === 'COMPANY' ? '公司专利' : '外部专利'}</Tag><Button icon={<CopyOutlined />} onClick={() => { if (!navigator.clipboard) { message.error('当前浏览器不支持复制'); return } void navigator.clipboard.writeText(facts.publication_number).then(() => message.success('公开号已复制')).catch(() => message.error('复制失败，请手动复制')) }}>复制公开号</Button></Space>} />
+    <PageHeader eyebrow="专利详情 / EVIDENCE" title={patent.title} description={`${facts.publication_number} · ${facts.applicant_names.join('、') || '暂无申请人'}`} extra={<Space wrap><Tag>{patent.status || '暂无状态'}</Tag>{patent.source_codes.map((source) => <Tag color="blue" key={source}>{source}</Tag>)}<Button icon={<CopyOutlined />} onClick={() => { if (!navigator.clipboard) { message.error('当前浏览器不支持复制'); return } void navigator.clipboard.writeText(facts.publication_number).then(() => message.success('公开号已复制')).catch(() => message.error('复制失败，请手动复制')) }}>复制公开号</Button></Space>} />
     <Card className="detail-summary" title={<Space><DataCategoryTag value="OFFICIAL" /><span>官方基本事实</span></Space>} variant="borderless">
       <Descriptions column={{ xs: 1, sm: 2, lg: 4 }} items={[
         ['申请号', facts.application_number], ['公开日', facts.publication_date], ['申请日', facts.filing_date], ['优先权日', facts.priority_date], ['国家 / 地区', facts.country], ['法律状态', facts.legal_status], ['IPC', facts.ipc_codes.join(' · ') || '暂无'], ['CPC', facts.cpc_codes.join(' · ') || '暂无'], ['发明人', facts.inventor_names.join('、')], ['最近更新', patent.updated_at],
@@ -110,18 +109,19 @@ export function PatentDetailPage() {
   </>
 }
 
-function Overview({ patent }: { patent: PatentDetailDto }) {
+function Overview({ patent }: { patent: PatentDetailViewModel }) {
   return <Row gutter={[16, 16]}>
     <Col xs={24} xl={15}><Card title={<Space><DataCategoryTag value="OFFICIAL" /><span>官方摘要</span></Space>} variant="borderless"><Paragraph>{patent.official_facts.abstract || '暂无官方摘要'}</Paragraph></Card></Col>
-    <Col xs={24} xl={9}><Card title={<Space><DataCategoryTag value="NORMALIZED" /><span>系统标准化字段</span></Space>} variant="borderless">{patent.normalized_fields.length ? <Descriptions column={1} size="small" items={patent.normalized_fields.map((field) => ({ key: field.label, label: field.label, children: <div>{field.value}<div className="table-sub">来源：{field.source.join(' / ')}</div></div> }))} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无标准化字段" />}</Card></Col>
+    <Col xs={24} xl={9}><Card title={<Space><DataCategoryTag value="NORMALIZED" /><span>系统标准化字段</span></Space>} variant="borderless">{patent.normalized_fields.length ? <Descriptions column={1} size="small" items={patent.normalized_fields.map((field) => ({ key: field.label, label: field.label, children: <div>{field.value}{field.source.length > 0 && <div className="table-sub">来源：{field.source.join(' / ')}</div>}</div> }))} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无标准化字段" />}</Card></Col>
   </Row>
 }
 
-function Claims({ patent }: { patent: PatentDetailDto }) {
-  return <Card title={<Space><DataCategoryTag value="OFFICIAL" /><span>权利要求</span></Space>} variant="borderless"><Space direction="vertical" size={16} className="claims-list">{patent.official_facts.claims.map((claim) => <div className={`claim ${claim.claim_type === '独立' ? 'independent' : ''}`} key={claim.claim_no}><div className="claim-label">权利要求 {claim.claim_no} <Tag color={claim.claim_type === '独立' ? 'blue' : undefined}>{claim.claim_type}</Tag></div><Paragraph>{claim.text}</Paragraph></div>)}</Space></Card>
+function Claims({ patent }: { patent: PatentDetailViewModel }) {
+  const claims = patent.official_facts.claims
+  return <Card title={<Space><DataCategoryTag value="OFFICIAL" /><span>权利要求</span></Space>} variant="borderless">{claims.length ? <Space direction="vertical" size={16} className="claims-list">{claims.map((claim) => <div className={`claim ${claim.claim_type === '独立' ? 'independent' : ''}`} key={claim.claim_no}><div className="claim-label">权利要求 {claim.claim_no} <Tag color={claim.claim_type === '独立' ? 'blue' : undefined}>{claim.claim_type}</Tag></div><Paragraph>{claim.text}</Paragraph></div>)}</Space> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无权利要求" />}</Card>
 }
 
-function Family({ patent }: { patent: PatentDetailDto }) {
+function Family({ patent }: { patent: PatentDetailViewModel }) {
   const { family_members: family, citations } = patent.official_facts
   return <Row gutter={[16, 16]}>
     <Col xs={24} xl={14}><Card title={<Space><DataCategoryTag value="OFFICIAL" /><span>同族公开文本</span></Space>} variant="borderless">{family.length ? <Table size="small" pagination={false} dataSource={family} rowKey="id" columns={[{ title: '国家', dataIndex: 'country' }, { title: '公开号', dataIndex: 'publication_number' }, { title: '公开日', dataIndex: 'publication_date' }, { title: '状态', dataIndex: 'legal_status' }]} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无同族记录" />}</Card></Col>
@@ -129,23 +129,23 @@ function Family({ patent }: { patent: PatentDetailDto }) {
   </Row>
 }
 
-function LegalEvents({ patent }: { patent: PatentDetailDto }) {
+function LegalEvents({ patent }: { patent: PatentDetailViewModel }) {
   const events = patent.official_facts.legal_events
   return <Card title={<Space><DataCategoryTag value="OFFICIAL" /><span>法律事件</span></Space>} variant="borderless">{events.length ? <Timeline items={events.map((event) => ({ children: <div><strong>{event.event}</strong><div className="table-sub">{event.date} · {event.source}</div></div> }))} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无法律事件" />}</Card>
 }
 
-function Sources({ patent }: { patent: PatentDetailDto }) {
+function Sources({ patent }: { patent: PatentDetailViewModel }) {
   return <Row gutter={[16, 16]}>
-    <Col xs={24} xl={15}><Card title="数据来源" variant="borderless"><Table scroll={{ x: 680 }} pagination={false} rowKey="source_record_id" dataSource={patent.sources} columns={[{ title: '来源', dataIndex: 'source', render: (value: string) => <Tag color="blue">{value}</Tag> }, { title: '源记录 ID', dataIndex: 'source_record_id' }, { title: '抓取时间', dataIndex: 'fetched_at' }, { title: '校验状态', dataIndex: 'status' }]} /></Card></Col>
-    <Col xs={24} xl={9}><Card title="外部发现路径" variant="borderless"><div className="discovery-path">{patent.discovery_path.map((step, index) => <div key={`${step}-${index}`}><CheckCircleFilled /><span>{step}</span>{index < patent.discovery_path.length - 1 && <b>↓</b>}</div>)}</div></Card></Col>
+    <Col xs={24} xl={15}><Card title="数据来源" variant="borderless">{patent.sources.length ? <Table scroll={{ x: 680 }} pagination={false} rowKey="source_record_id" dataSource={patent.sources} columns={[{ title: '来源', dataIndex: 'source', render: (value: string) => <Tag color="blue">{value}</Tag> }, { title: '源记录 ID', dataIndex: 'source_record_id' }, { title: '抓取时间', dataIndex: 'fetched_at' }]} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据来源" />}</Card></Col>
+    <Col xs={24} xl={9}><Card title="外部发现路径" variant="borderless">{patent.discovery_path.length ? <div className="discovery-path">{patent.discovery_path.map((step, index) => <div key={`${step}-${index}`}><CheckCircleFilled /><span>{step}</span>{index < patent.discovery_path.length - 1 && <b>↓</b>}</div>)}</div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无发现路径" />}</Card></Col>
   </Row>
 }
 
-function Analysis({ patent }: { patent: PatentDetailDto }) {
+function Analysis({ patent }: { patent: PatentDetailViewModel }) {
   const ai = patent.ai_enhancements
   const human = patent.human_conclusions
   return <Row gutter={[16, 16]}>
-    <Col xs={24} lg={12}><Card title={<Space><DataCategoryTag value="AI" /><span>系统 / AI 增强</span></Space>} variant="borderless"><Descriptions column={1} size="small" items={[{ key: 'keywords', label: '关键词', children: ai.keywords.map((keyword) => <Tag key={keyword}>{keyword}</Tag>) }, { key: 'problem', label: '技术问题', children: ai.technical_problem || '暂无' }, { key: 'effect', label: '技术效果', children: ai.technical_effect || '暂无' }]} /></Card></Col>
+    <Col xs={24} lg={12}><Card title={<Space><DataCategoryTag value="AI" /><span>系统 / AI 增强</span></Space>} variant="borderless"><Descriptions column={1} size="small" items={[{ key: 'keywords', label: '关键词', children: ai.keywords.length ? ai.keywords.map((keyword) => <Tag key={keyword}>{keyword}</Tag>) : '暂无' }, { key: 'problem', label: '技术问题', children: ai.technical_problem || '暂无' }, { key: 'effect', label: '技术效果', children: ai.technical_effect || '暂无' }]} /></Card></Col>
     <Col xs={24} lg={12}><Card title={<Space><DataCategoryTag value="HUMAN" /><span>人工结论与公司项目关联</span></Space>} variant="borderless">{human.notes.length ? human.notes.map((note) => <Paragraph key={note}>{note}</Paragraph>) : <Text type="secondary">暂无人工备注</Text>}<div className="project-links">{human.project_links.length ? human.project_links.map((project) => <Link key={project.id} to={`/projects/${project.id}`}><Card size="small"><strong>{project.code} · {project.name}</strong><div className="table-sub">{project.relation}</div></Card></Link>) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无公司项目关联" />}</div></Card></Col>
   </Row>
 }

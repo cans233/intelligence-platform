@@ -1,21 +1,20 @@
-import { AppstoreOutlined, FileTextOutlined, ReadOutlined, RightOutlined, SearchOutlined, TeamOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, FileTextOutlined, ReadOutlined, RightOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Descriptions, Empty, Input, Row, Select, Space, Statistic, Table, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { projectApi } from '../api/project'
-import { RecordQualityTag } from '../components/DataTags'
 import { PageHeader } from '../components/PageHeader'
 import { StateBlock, stateFromUrl } from '../components/StateBlock'
-import type { DocumentDto, ProjectDetailDto, ProjectPatentRelation, TechnologyDto } from '../types'
+import type { ProjectDetailViewModel, ProjectDocumentViewModel, ProjectListItemViewModel, ProjectPatentRelationViewModel, ProjectTechnologyViewModel } from '../types'
 
 const { Paragraph, Text, Title } = Typography
-const statusColor: Record<ProjectDetailDto['status'], string> = { '进行中': 'green', '观察中': 'orange', '已归档': 'default' }
+const statusColor = (status: string) => status === '进行中' ? 'green' : status === '观察中' ? 'orange' : 'default'
 
 export function ProjectsPage() {
-  const [items, setItems] = useState<ProjectDetailDto[]>([])
+  const [items, setItems] = useState<ProjectListItemViewModel[]>([])
   const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState<ProjectDetailDto['status'] | 'ALL'>('ALL')
+  const [status, setStatus] = useState<string>('ALL')
   const [owner, setOwner] = useState('ALL')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -51,13 +50,11 @@ export function ProjectsPage() {
         </Space>
       </div>
       {forcedState ? <StateBlock type={forcedState} onRetry={reset} /> : error ? <StateBlock type="error" onRetry={() => void load()} /> : loading ? <StateBlock type="loading" /> : visibleItems.length === 0 ? <StateBlock type="empty" onRetry={reset} /> : <Table rowKey="id" dataSource={visibleItems} pagination={false} scroll={{ x: 1080 }} columns={[
-        { title: '项目', dataIndex: 'name', width: 290, render: (name: string, record: ProjectDetailDto) => <Link to={`/projects/${record.id}`}><strong>{name}</strong><div className="table-sub">{record.code}</div></Link> },
-        { title: '组织 / 部门', width: 220, render: (_: unknown, record: ProjectDetailDto) => <><div>{record.organization}</div><div className="table-sub">{record.department}</div></> },
-        { title: '负责人', dataIndex: 'owner' },
-        { title: '阶段', dataIndex: 'stage' },
-        { title: '技术', dataIndex: 'technologies', render: (values: TechnologyDto[]) => values.slice(0, 2).map((value) => <Tag key={value.id}>{value.name}</Tag>) },
-        { title: '专利关系', render: (_: unknown, record: ProjectDetailDto) => `${record.company_patents.length} 公司 / ${record.external_related_patents.length} 外部` },
-        { title: '状态', dataIndex: 'status', render: (value: ProjectDetailDto['status']) => <Tag color={statusColor[value]}>{value}</Tag> },
+        { title: '项目', dataIndex: 'name', width: 290, render: (name: string, record: ProjectListItemViewModel) => <Link to={`/projects/${record.id}`}><strong>{name}</strong><div className="table-sub">{record.code}</div></Link> },
+        { title: '组织 / 部门', width: 220, render: (_: unknown, record: ProjectListItemViewModel) => <><div>{record.organization || '暂无'}</div><div className="table-sub">{record.department || '暂无'}</div></> },
+        { title: '负责人', dataIndex: 'owner', render: (value: string) => value || '暂无' },
+        { title: '技术', dataIndex: 'technologies', render: (values: ProjectTechnologyViewModel[]) => values.length ? values.slice(0, 2).map((value) => <Tag key={value.id}>{value.name}</Tag>) : '暂无' },
+        { title: '状态', dataIndex: 'status', render: (value: string) => <Tag color={statusColor(value)}>{value || '暂无'}</Tag> },
         { title: '更新日期', dataIndex: 'updated_at' },
       ]} />}
     </Card>
@@ -66,7 +63,7 @@ export function ProjectsPage() {
 
 export function ProjectDetailPage() {
   const { id = '' } = useParams()
-  const [project, setProject] = useState<ProjectDetailDto | null>(null)
+  const [project, setProject] = useState<ProjectDetailViewModel | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [notFound, setNotFound] = useState(false)
@@ -96,16 +93,15 @@ export function ProjectDetailPage() {
 
   return <>
     <div className="detail-breadcrumb"><Link to="/projects">项目库</Link><RightOutlined />{project.code}</div>
-    <PageHeader eyebrow="项目详情 / PROJECT" title={project.name} description={project.description} extra={<Space><Tag color={statusColor[project.status]}>{project.status}</Tag><Tag>只读</Tag></Space>} />
+    <PageHeader eyebrow="项目详情 / PROJECT" title={project.name} description={project.description || '暂无项目描述'} extra={<Space><Tag color={statusColor(project.status)}>{project.status || '暂无状态'}</Tag><Tag>只读</Tag></Space>} />
     <Row gutter={[16, 16]} className="project-metrics">
       <Metric title="技术主题" value={project.technologies.length} icon={<ThunderboltOutlined />} />
       <Metric title="内部文档" value={project.documents.length} icon={<FileTextOutlined />} />
       <Metric title="专利关系" value={project.company_patents.length + project.external_related_patents.length} icon={<ReadOutlined />} />
-      <Metric title="项目成员" value={project.member_count} icon={<TeamOutlined />} />
     </Row>
     <Card title="项目身份" variant="borderless">
       <Descriptions column={{ xs: 1, md: 2, xl: 4 }} items={[
-        ['项目编号', project.code], ['组织', project.organization], ['部门', project.department], ['负责人', project.owner], ['当前阶段', project.stage], ['状态', project.status], ['风险等级', project.risk], ['最近更新', project.updated_at],
+        ['项目编号', project.code], ['组织', project.organization || '暂无'], ['部门', project.department || '暂无'], ['负责人', project.owner || '暂无'], ['状态', project.status || '暂无'], ['创建时间', project.created_at], ['最近更新', project.updated_at],
       ].map(([label, children]) => ({ key: label, label, children }))} />
     </Card>
     <Row gutter={[16, 16]} className="mt16">
@@ -121,21 +117,20 @@ function Metric({ title, value, icon }: { title: string; value: number; icon: Re
   return <Col xs={12} lg={6}><Card variant="borderless"><Statistic title={title} value={value} prefix={icon} /></Card></Col>
 }
 
-function TechnologyRelations({ items }: { items: TechnologyDto[] }) {
-  return <Card title="技术" variant="borderless" className="full-height">{items.length ? <div className="relation-list">{items.map((item) => <div key={item.id}><Link to={`/technologies#${item.id}`}><Title level={5}>{item.name}</Title></Link><Text type="secondary">{item.domain} · {item.stage} · {item.owner}</Text><Paragraph>{item.description}</Paragraph></div>)}</div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无关联技术" />}</Card>
+function TechnologyRelations({ items }: { items: ProjectTechnologyViewModel[] }) {
+  return <Card title="技术" variant="borderless" className="full-height">{items.length ? <div className="relation-list">{items.map((item) => <div key={item.id}><Link to={`/technologies#${item.id}`}><Title level={5}>{item.name}</Title></Link>{item.code && <Text type="secondary">{item.code}</Text>}</div>)}</div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无关联技术" />}</Card>
 }
 
-function DocumentRelations({ items }: { items: DocumentDto[] }) {
-  return <Card title="文档" variant="borderless" className="full-height">{items.length ? <div className="document-list">{items.map((item) => <div key={item.id}><FileTextOutlined /><div><Link to={`/documents#${item.id}`}><strong>{item.name}</strong></Link><Paragraph type="secondary">{item.version} · {item.status} · {item.updated_at}</Paragraph></div><Tag>{item.file_type}</Tag></div>)}</div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无关联文档" />}</Card>
+function DocumentRelations({ items }: { items: ProjectDocumentViewModel[] }) {
+  return <Card title="文档" variant="borderless" className="full-height">{items.length ? <div className="document-list">{items.map((item) => <div key={item.id}><FileTextOutlined /><div><Link to={`/documents#${item.id}`}><strong>{item.name}</strong></Link><Paragraph type="secondary">{item.current_version_no ? `v${item.current_version_no} · ` : ''}{item.status}</Paragraph></div><Tag>{item.file_type}</Tag></div>)}</div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无关联文档" />}</Card>
 }
 
-function PatentRelations({ title, description, items, showReason = false }: { title: string; description: string; items: ProjectPatentRelation[]; showReason?: boolean }) {
+function PatentRelations({ title, description, items, showReason = false }: { title: string; description: string; items: ProjectPatentRelationViewModel[]; showReason?: boolean }) {
   return <Card title={title} extra={<Text type="secondary">{description}</Text>} variant="borderless">{items.length ? <Table rowKey="id" pagination={false} scroll={{ x: 920 }} dataSource={items} columns={[
-    { title: '专利', dataIndex: 'title', width: 320, render: (value: string, record: ProjectPatentRelation) => <Link to={`/patents/${record.id}`}><strong>{value}</strong><div className="table-sub">{record.publication_number}</div></Link> },
-    { title: '申请人', dataIndex: 'applicant' },
+    { title: '专利', dataIndex: 'title', width: 320, render: (value: string, record: ProjectPatentRelationViewModel) => <Link to={`/patents/${record.id}`}><strong>{value}</strong><div className="table-sub">{record.publication_number}</div></Link> },
     { title: '国家', dataIndex: 'country' },
-    { title: '记录质量', dataIndex: 'record_quality', render: (value: ProjectPatentRelation['record_quality']) => <RecordQualityTag value={value} /> },
-    { title: '相关度', dataIndex: 'relevance', render: (value: ProjectPatentRelation['relevance']) => <Tag color={value === '高' ? 'green' : value === '中' ? 'blue' : 'default'}>{value}</Tag> },
+    { title: '关系类型', dataIndex: 'relation_type', render: (value: string) => value || '暂无' },
+    { title: '相关度', dataIndex: 'relevance_score', render: (value?: number) => value === undefined ? '暂无' : value },
     ...(showReason ? [{ title: '关联原因', dataIndex: 'relation_reason', width: 300 }] : []),
   ]} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={`暂无${title}`} />}</Card>
 }

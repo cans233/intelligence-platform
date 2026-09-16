@@ -7,13 +7,12 @@ import { patentApi } from '../api/patent'
 import { projectApi } from '../api/project'
 import { reviewApi } from '../api/review'
 import { systemApi } from '../api/system'
-import { RecordQualityTag } from '../components/DataTags'
 import { PageHeader } from '../components/PageHeader'
 import { StateBlock, stateFromUrl } from '../components/StateBlock'
-import type { DataSourceStatusDto, JobRecordDto, MonitoringProfileDto, PatentListItemDto, ProjectDetailDto, ReviewItemDto } from '../types'
+import type { DataSourceStatusDto, JobRecordDto, MonitoringProfileDto, PatentListItemViewModel, ProjectListItemViewModel, ReviewItemDto } from '../types'
 
 const { Text } = Typography
-type DashboardData = { patents: PatentListItemDto[]; patentTotal: number; projects: ProjectDetailDto[]; profiles: MonitoringProfileDto[]; reviews: ReviewItemDto[]; sources: DataSourceStatusDto[]; jobs: JobRecordDto[] }
+type DashboardData = { patents: PatentListItemViewModel[]; patentTotal: number; projects: ProjectListItemViewModel[]; profiles: MonitoringProfileDto[]; reviews: ReviewItemDto[]; sources: DataSourceStatusDto[]; jobs: JobRecordDto[] }
 const emptyData: DashboardData = { patents: [], patentTotal: 0, projects: [], profiles: [], reviews: [], sources: [], jobs: [] }
 
 export function DashboardPage() {
@@ -54,7 +53,7 @@ export function DashboardPage() {
         <Col xs={24} xl={9}><Card title="待处理事项" extra={<Link to="/review">进入审核</Link>} variant="borderless"><div className="todo-list">{data.reviews.map((item) => <div className="todo-row" key={item.id}><span className={`todo-dot ${item.priority === '高' ? 'error' : 'warning'}`} /><div><strong>{item.type}</strong><span>{item.target} · {item.detail}</span></div><Text type="secondary">{item.status}</Text></div>)}{failedJobs.map((job) => <div className="todo-row" key={job.id}><span className="todo-dot error" /><div><strong>{job.type}失败</strong><span>{job.summary}</span></div><Text type="secondary">{job.started_at}</Text></div>)}</div></Card></Col>
       </Row>
       <Row gutter={[16, 16]}>
-        <Col xs={24} xl={15}><Card title="最近入库" extra={<Link to="/patents">专利库</Link>} variant="borderless"><Table size="small" pagination={false} dataSource={data.patents} rowKey="id" columns={[{ title: '专利', dataIndex: 'title', render: (text: string, record: PatentListItemDto) => <Link to={`/patents/${record.id}`}><strong>{text}</strong><div className="table-sub">{record.publication_number}</div></Link> }, { title: '归属', dataIndex: 'ownership', render: (value: PatentListItemDto['ownership']) => value === 'COMPANY' ? '公司专利' : '外部专利' }, { title: '记录质量', dataIndex: 'record_quality', render: (value: PatentListItemDto['record_quality']) => <RecordQualityTag value={value} /> }, { title: '公开日', dataIndex: 'publication_date' }]} /></Card></Col>
+        <Col xs={24} xl={15}><Card title="最近入库" extra={<Link to="/patents">专利库</Link>} variant="borderless"><Table size="small" pagination={false} dataSource={data.patents} rowKey="id" columns={[{ title: '专利', dataIndex: 'title', render: (text: string, record: PatentListItemViewModel) => <Link to={`/patents/${record.id}`}><strong>{text}</strong><div className="table-sub">{record.publication_number}</div></Link> }, { title: '法律状态', dataIndex: 'legal_status', render: (value: string) => value || '暂无' }, { title: '数据来源', dataIndex: 'source_codes', render: (values: string[]) => values.join(' / ') || '暂无' }, { title: '公开日', dataIndex: 'publication_date', render: (value: string) => value || '暂无' }]} /></Card></Col>
         <Col xs={24} xl={9}><Card title="数据源健康" variant="borderless"><div className="source-health">{data.sources.map((source) => <div key={source.code}><span><i className={source.status === '正常' ? 'healthy' : 'warning'} />{source.label}</span><Text type="secondary">{source.last_sync_at}</Text><Tag color={source.status === '正常' ? 'green' : source.status === '异常' ? 'red' : 'orange'}>{source.status}</Tag></div>)}</div></Card></Col>
       </Row>
     </div>}
