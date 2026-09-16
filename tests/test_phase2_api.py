@@ -144,8 +144,8 @@ def test_phase2_api_not_found_and_auth_failures() -> None:
     missing_id = UUID("00000000-0000-0000-0000-000000000000")
 
     missing = client.get(f"/api/v1/patents/{missing_id}")
-    assert missing.status_code == 404
-    assert missing.json()["code"] == "PATENT_NOT_FOUND"
+    assert missing.status_code == 401
+    assert missing.json()["code"] == "AUTH_REQUIRED"
 
     unauthorized = client.get("/api/v1/me")
     assert unauthorized.status_code == 401

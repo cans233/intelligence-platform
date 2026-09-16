@@ -1,4 +1,4 @@
-export type ApiResponse<T> = { code: number; data: T; message: string; trace_id: string }
+export type ApiResponse<T> = { code: string; data: T; message: string; trace_id: string }
 export type PageResult<T> = { items: T[]; page: number; page_size: number; total: number }
 
 export class ApiError extends Error {
@@ -18,7 +18,7 @@ export async function apiRequest<T>(path: string, init: RequestInit, mockHandler
     init.signal?.throwIfAborted()
     const data = await mockHandler()
     init.signal?.throwIfAborted()
-    return { code: 0, data, message: 'ok', trace_id: `mock-${path.replace(/\W+/g, '-')}` }
+    return { code: 'OK', data, message: 'ok', trace_id: `mock-${path.replace(/\W+/g, '-')}` }
   }
 
   const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}${path}`, {
@@ -26,7 +26,7 @@ export async function apiRequest<T>(path: string, init: RequestInit, mockHandler
     headers: { 'Content-Type': 'application/json', ...init.headers },
   })
   const payload = await response.json().catch(() => null) as ApiResponse<T> | null
-  if (!response.ok || !payload || payload.code !== 0) {
+  if (!response.ok || !payload || payload.code !== 'OK') {
     throw new ApiError(payload?.message || `请求失败（${response.status}）`, payload?.trace_id, response.status)
   }
   return payload

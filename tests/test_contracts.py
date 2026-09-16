@@ -107,6 +107,15 @@ def test_error_envelope_code_is_string() -> None:
     assert contract["components"]["responses"]["EnvelopeError"]["content"]["application/json"]["schema"][
         "$ref"
     ] == "#/components/schemas/Envelope"
+    assert "type" not in envelope["properties"]["data"]
+    assert schemas_project_patch_allows_only_non_null_name_and_status(contract)
+
+
+def schemas_project_patch_allows_only_non_null_name_and_status(contract: dict) -> bool:
+    properties = contract["components"]["schemas"]["ProjectPatch"]["properties"]
+    assert properties["name"] == {"type": "string"}
+    assert properties["status"] == {"type": "string"}
+    return True
 
 
 def test_search_and_event_contracts_keep_boundary_fields_separate() -> None:

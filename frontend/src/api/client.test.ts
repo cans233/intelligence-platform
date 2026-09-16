@@ -21,7 +21,7 @@ describe('API mode adapter', () => {
 
   it('uses the /api/v1 boundary in real mode', async () => {
     vi.stubEnv('VITE_API_MODE', 'real')
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 0, data: { items: [], page: 1, page_size: 20, total: 0 }, message: 'ok', trace_id: 'trace-real' }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'OK', data: { items: [], page: 1, page_size: 20, total: 0 }, message: 'ok', trace_id: 'trace-real' }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     vi.stubGlobal('fetch', fetchMock)
 
     await projectApi.list('毫米波')
@@ -31,7 +31,7 @@ describe('API mode adapter', () => {
 
   it('preserves HTTP status and trace_id on a business error', async () => {
     vi.stubEnv('VITE_API_MODE', 'real')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 403, data: null, message: '无权限访问', trace_id: 'trace-403' }), { status: 403 })))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'PERMISSION_DENIED', data: null, message: '无权限访问', trace_id: 'trace-403' }), { status: 403 })))
 
     await expect(apiRequest('/restricted', { method: 'GET' }, () => null)).rejects.toMatchObject({ message: '无权限访问', traceId: 'trace-403', status: 403 })
   })

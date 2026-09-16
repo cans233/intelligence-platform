@@ -375,9 +375,9 @@ components:
     ProjectPatch:
       type: object
       properties:
-        name: { type: [string, 'null'] }
+        name: { type: string }
         description: { type: [string, 'null'] }
-        status: { type: [string, 'null'] }
+        status: { type: string }
         department_id: { type: [string, 'null'], format: uuid }
         owner_id: { type: [string, 'null'], format: uuid }
         classification: { type: [string, 'null'] }
@@ -438,7 +438,7 @@ components:
       required: [code, data, message, trace_id]
       properties:
         code: { type: string }
-        data: { type: [object, 'null'] }
+        data: {}
         message: { type: string }
         trace_id: { type: string }
     EnvelopeLoginData:

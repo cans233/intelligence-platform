@@ -222,7 +222,7 @@ Mock负责模拟契约与状态，不需要在浏览器实现搜索排序算法�
 | 契约 | 已明确内容 | 开发前还需落实 |
 | --- | --- | --- |
 | 数据命名 | `publication_number`、`application_number`、`family_id`、`filing_date`、`publication_date`、`priority_date`、`source_code`、`raw_data`、`fetched_at` | 类型、可空、实体id含义、单条来源与`source_codes`集合的区别 |
-| API响应 | 成功`code: 0`；失败示例是`PATENT_NOT_FOUND`字符串；统一分页与`trace_id` | TypeScript不能把所有`code`声明为number；稳定错误枚举、HTTP映射和端点Schema |
+| API响应 | 成功`code: OK`；失败示例是`PATENT_NOT_FOUND`字符串；统一分页与`trace_id` | TypeScript不能把所有`code`声明为number；稳定错误枚举、HTTP映射和端点Schema |
 | 事件Envelope | `event/version/job_id/trace_id/entity_id/source_code/occurred_at/payload` | entity具体层级、payload Schema、重复或乱序处理、索引投递应答 |
 | Index Document | 统一文本、编号、日期、分类、来源、`visibility_scope`等字段 | 必填和空值、字段完整性、权限范围、删除与撤权同步、版本与重建方式 |
 
